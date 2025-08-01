@@ -33,6 +33,8 @@ minu는 사용자의 스크린타임을 추적하고 생산적인 활동을 장�
 - 타입별 맞춤 피드백 (YouTube, 스크린타임, 타이머)
 
 ## 백엔드 아키텍처
+<img width="1181" height="466" alt="image" src="https://github.com/user-attachments/assets/a34fa54b-a707-427e-a431-c6c8700b5e17" />
+
 
 ## 기술 스택
 
