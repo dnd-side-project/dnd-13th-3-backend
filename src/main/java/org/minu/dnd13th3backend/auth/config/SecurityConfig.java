@@ -27,8 +27,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/auth/oauth2/success", true)
-                        .failureUrl("/auth/oauth2/failure")
+                        .defaultSuccessUrl("/api/auth/oauth2/success", true)
+                        .failureUrl("/api/auth/oauth2/failure")
                 );
 
         return http.build();
