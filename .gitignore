@@ -36,5 +36,5 @@ out/
 ### VS Code ###
 .vscode/
 
-### Configuration FIle
-application.properties
+### Configuration Files
+application.yml
