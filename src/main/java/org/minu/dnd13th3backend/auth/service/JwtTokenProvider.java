@@ -8,18 +8,22 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
 
+    private final TokenBlacklistService tokenBlacklistService;
     private final SecretKey secretKey;
     private final long accessTokenValidityInMilliseconds;
     private final long refreshTokenValidityInMilliseconds;
 
     public JwtTokenProvider(
+            TokenBlacklistService tokenBlacklistService,
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds,
             @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInSeconds) {
+        this.tokenBlacklistService = tokenBlacklistService;
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
         this.accessTokenValidityInMilliseconds = accessTokenValidityInSeconds * 1000;
         this.refreshTokenValidityInMilliseconds = refreshTokenValidityInSeconds * 1000;
@@ -31,6 +35,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(subject)
+                .id(UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(validity)
                 .signWith(secretKey)
@@ -43,6 +48,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(subject)
+                .id(UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(validity)
                 .signWith(secretKey)
@@ -56,6 +62,11 @@ public class JwtTokenProvider {
     public boolean validateToken(String token) {
         try {
             getClaims(token);
+            
+            if (tokenBlacklistService.isBlacklisted(token)) {
+                return false;
+            }
+            
             return true;
         } catch (Exception e) {
             return false;
