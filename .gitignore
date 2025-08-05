@@ -38,4 +38,3 @@ out/
 
 ### Configuration FIle
 application.properties
-src/main/resources/application-prod.yml
