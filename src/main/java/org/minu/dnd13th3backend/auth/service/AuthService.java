@@ -20,6 +20,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final OauthInfoRepository oauthInfoRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
     public TokenResponse processOAuth2Login(OAuth2User oauth2User) {
         if (oauth2User == null) {
@@ -40,6 +41,8 @@ public class AuthService {
         User user = oauthInfo.getUser();
         String accessToken = jwtTokenProvider.createAccessToken(user.getId().toString());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId().toString());
+        
+        refreshTokenService.storeRefreshToken(user.getId().toString(), refreshToken);
 
         return TokenResponse.of(accessToken, refreshToken);
     }
@@ -65,12 +68,26 @@ public class AuthService {
         }
 
         String userId = jwtTokenProvider.getSubject(refreshToken);
+        
+        if (!refreshTokenService.isValidRefreshToken(userId, refreshToken)) {
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.");
+        }
+        
         User user = userRepository.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         String newAccessToken = jwtTokenProvider.createAccessToken(user.getId().toString());
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId().toString());
+        
+        refreshTokenService.storeRefreshToken(user.getId().toString(), newRefreshToken);
 
         return TokenResponse.of(newAccessToken, newRefreshToken);
+    }
+    
+    public String getUserIdFromToken(String accessToken) {
+        if (!jwtTokenProvider.validateToken(accessToken)) {
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, "유효하지 않은 액세스 토큰입니다.");
+        }
+        return jwtTokenProvider.getSubject(accessToken);
     }
 }
