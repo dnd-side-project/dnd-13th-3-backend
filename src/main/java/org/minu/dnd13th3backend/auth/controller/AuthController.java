@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.minu.dnd13th3backend.auth.dto.TokenResponse;
 import org.minu.dnd13th3backend.auth.service.AuthService;
+import org.minu.dnd13th3backend.auth.service.RefreshTokenService;
+import org.minu.dnd13th3backend.auth.service.TokenBlacklistService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -24,6 +26,8 @@ import org.springframework.web.servlet.view.RedirectView;
 public class AuthController {
 
     private final AuthService authService;
+    private final RefreshTokenService refreshTokenService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Operation(hidden = true)
     @GetMapping("/oauth2/success")  
@@ -94,5 +98,42 @@ public class AuthController {
         String token = refreshToken.replace("Bearer ", "");
         TokenResponse tokenResponse = authService.refreshToken(token);
         return ResponseEntity.ok(tokenResponse);
+    }
+
+    @Operation(
+            summary = "로그아웃", 
+            description = "Access Token을 무효화하여 로그아웃합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204", 
+                    description = "로그아웃 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "401", 
+                    description = "유효하지 않은 토큰",
+                    content = @Content(
+                            examples = @ExampleObject(
+                                    value = "{\"status\":401,\"message\":\"유효하지 않은 토큰입니다.\"}"
+                            )
+                    )
+            )
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @Parameter(
+                    description = "Bearer {accessToken} 형태의 Access Token", 
+                    required = true,
+                    example = "Bearer eyJhbGciOiJIUzUxMiJ9..."
+            )
+            @RequestHeader("Authorization") String authHeader) {
+        
+        String accessToken = authHeader.replace("Bearer ", "");
+        String userId = authService.getUserIdFromToken(accessToken);
+        
+        tokenBlacklistService.blacklistToken(accessToken);
+        refreshTokenService.deleteRefreshToken(userId);
+        
+        return ResponseEntity.noContent().build();
     }
 }
