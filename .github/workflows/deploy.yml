@@ -22,14 +22,14 @@ jobs:
           cache: 'gradle'
 
       - name: Build Spring Boot application
-        run: ./gradlew clean build --no-daemon
-        env:
-          DB_URL: ${{ secrets.DB_URL }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        run: |
+          ./gradlew clean build --no-daemon \
+            -Djwt.secret.key="${{ secrets.JWT_SECRET_KEY }}" \
+            -Dspring.datasource.url="${{ secrets.DB_URL }}" \
+            -Dspring.datasource.username="${{ secrets.DB_USERNAME }}" \
+            -Dspring.datasource.password="${{ secrets.DB_PASSWORD }}" \
+            -Dspring.security.oauth2.client.registration.google.client-id="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            -Dspring.security.oauth2.client.registration.google.client-secret="${{ secrets.GOOGLE_CLIENT_SECRET }}" 
 
       - name: Docker Login to Docker Hub
         uses: docker/login-action@v3
@@ -59,7 +59,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ec2-user/
+            cd /home/ec2-user/dnd-13th-3-backend 
             echo "DB_URL=${{ secrets.DB_URL }}" > .env
             echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
