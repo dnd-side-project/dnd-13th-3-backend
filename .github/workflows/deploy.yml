@@ -20,13 +20,7 @@ jobs:
 
       - name: Build Spring Boot application
         run: |
-          ./gradlew clean assemble --no-daemon --info \
-            -Djwt.secret="${{ secrets.JWT_SECRET_KEY }}" \
-            -Dspring.datasource.url="${{ secrets.DB_URL }}" \
-            -Dspring.datasource.username="${{ secrets.DB_USERNAME }}" \
-            -Dspring.datasource.password="${{ secrets.DB_PASSWORD }}" \
-            -Dspring.security.oauth2.client.registration.google.client-id="${{ secrets.GOOGLE_CLIENT_ID }}" \
-            -Dspring.security.oauth2.client.registration.google.client-secret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+          ./gradlew clean assemble --no-daemon
 
       - name: Docker Login to Docker Hub
         uses: docker/login-action@v3
@@ -43,7 +37,7 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to EC2 (docker-compose only)
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -54,36 +48,24 @@ jobs:
             APP_DIR="/home/ec2-user/dnd-13th-3-backend"
             cd "$APP_DIR"
 
-            if ! command -v docker-compose >/dev/null 2>&1; then
-              if [ -x /usr/libexec/docker/cli-plugins/docker-compose ]; then
-                sudo ln -sf /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
-              fi
-            fi
-            docker-compose version
-
-            docker logout || true
+            # 도커 로그인
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-            ESCAPED_JWT=$(printf '%s' "${{ secrets.JWT_SECRET_KEY }}" | sed 's/\$/$$/g')
-
-            {
-              echo "DB_URL=jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true"
-              echo "DB_USERNAME=${{ secrets.DB_USERNAME }}"
-              echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-              echo "DB_NAME=minu"
-              echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}"
-              echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}"
-              echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}"
-              echo "JWT_SECRET_KEY=$ESCAPED_JWT"
-            } > .env
-
-            docker-compose down || true
-            docker rm -f spring-app mysql-db 2>/dev/null || true
-
+            # cat과 EOF를 사용해 .env 파일을 안전하게 생성
+            cat <<EOF > .env
+            DB_URL="jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true"
+            DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            DB_NAME="minu"
+            DB_ROOT_PASSWORD="${{ secrets.DB_ROOT_PASSWORD }}"
+            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+            EOF
+            
+            # docker-compose를 사용해 애플리케이션을 실행
             docker-compose pull
             docker-compose up -d --force-recreate --remove-orphans
 
-            docker image prune -f
-  
-  
-
+            # 사용하지 않는 도커 이미지 정리
+            docker image prune -af
