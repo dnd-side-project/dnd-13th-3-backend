@@ -1,5 +1,4 @@
-# 08/09 17:08
-
+# 최종 버전: 모든 문제를 해결한 최종 스크립트
 name: CI/CD Pipeline for Spring Boot on EC2
 
 on:
@@ -50,7 +49,7 @@ jobs:
             APP_DIR="/home/ec2-user/dnd-13th-3-backend"
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
-            
+
             cat <<'EOF' > docker-compose.yml
             services:
               app:
@@ -66,7 +65,7 @@ jobs:
                 networks:
                   - app-network
                 restart: always
-            
+
               db:
                 image: mysql:8.0
                 container_name: mysql-db
@@ -82,15 +81,15 @@ jobs:
                 networks:
                   - app-network
                 restart: always
-            
+
             networks:
               app-network:
                 driver: bridge
-            
+
             volumes:
               db_data:
             EOF
-            
+
             cat <<'EOF' > .env
             DB_URL="jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true"
             DB_USERNAME="${{ secrets.DB_USERNAME }}"
@@ -107,5 +106,5 @@ jobs:
             docker-compose down --volumes
             docker-compose pull
             docker-compose up -d
-            
+
             docker image prune -af
