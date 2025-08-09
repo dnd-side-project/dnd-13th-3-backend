@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     image: jonghoon714/dnd-13th-3-backend:latest
