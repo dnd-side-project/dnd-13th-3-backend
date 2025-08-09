@@ -54,7 +54,7 @@ jobs:
             ESCAPED_GOOGLE_SECRET=$(printf '%s' "${{ secrets.GOOGLE_CLIENT_SECRET }}" | awk '{gsub(/\\$/, "\\\\$"); print}')
             ESCAPED_JWT_KEY=$(printf '%s' "${{ secrets.JWT_SECRET_KEY }}" | awk '{gsub(/\\$/, "\\\\$"); print}')
             
-            cat <<EOF > docker-compose.yml
+            cat << 'EOF' > docker-compose.yml
             services:
               app:
                 image: ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest
