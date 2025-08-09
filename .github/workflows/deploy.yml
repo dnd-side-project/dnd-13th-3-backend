@@ -30,12 +30,7 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          docker build \
-            -t ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest \
-            --build-arg GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
-            --build-arg GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
-            --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
-            .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest
 
   deploy:
@@ -51,13 +46,17 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ec2-user/dnd-13th-3-backend
-            echo "DB_URL=${{ secrets.DB_URL }}" > .env
+            echo "DB_URL=jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true" > .env
             echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "DB_NAME=minu" >> .env
+            echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env  
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
             echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
-            docker-compose down
-            docker-compose pull
-            docker-compose up -d --build --force-recreate
+            git fetch --all || true
+            git reset --hard origin/develop || true
+            docker-compose down || true
+            docker-compose build --pull
+            docker-compose up -d --force-recreate
             docker image prune -f
