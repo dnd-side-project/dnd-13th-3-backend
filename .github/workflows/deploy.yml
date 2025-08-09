@@ -59,16 +59,12 @@ jobs:
             echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
             echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
             
-            # 최신 코드 동기화
-            git fetch --all || true
-            git reset --hard origin/develop || true
-            
             # 기존 컨테이너 중지
-            docker compose down || true
+            docker-compose down || true
             
             # Public 이미지 pull 후 재기동
-            docker compose pull
-            docker compose up -d --force-recreate
+            docker-compose pull
+            docker-compose up -d --force-recreate --remove-orphans
             
             # 안 쓰는 이미지 정리
             docker image prune -f
