@@ -49,26 +49,15 @@ jobs:
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
             
-            ESCAPED_DB_PASSWORD=$(printf '%s' "${{ secrets.DB_PASSWORD }}" | awk '{gsub(/\\$/, "\\\\$"); print}')
-            ESCAPED_DB_ROOT_PASSWORD=$(printf '%s' "${{ secrets.DB_ROOT_PASSWORD }}" | awk '{gsub(/\\$/, "\\\\$"); print}')
-            ESCAPED_GOOGLE_SECRET=$(printf '%s' "${{ secrets.GOOGLE_CLIENT_SECRET }}" | awk '{gsub(/\\$/, "\\\\$"); print}')
-            ESCAPED_JWT_KEY=$(printf '%s' "${{ secrets.JWT_SECRET_KEY }}" | awk '{gsub(/\\$/, "\\\\$"); print}')
-            
-            cat << 'EOF' > docker-compose.yml
+            cat <<'EOF' > docker-compose.yml
             services:
               app:
                 image: ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest
                 container_name: spring-app
                 ports:
                   - "8080:8080"
-                environment:
-                  DB_URL: "jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true"
-                  DB_USERNAME: "${{ secrets.DB_USERNAME }}"
-                  DB_PASSWORD: "${ESCAPED_DB_PASSWORD}"
-                  DB_NAME: "${{ secrets.DB_NAME }}"
-                  GOOGLE_CLIENT_ID: "${{ secrets.GOOGLE_CLIENT_ID }}"
-                  GOOGLE_CLIENT_SECRET: "${ESCAPED_GOOGLE_SECRET}"
-                  JWT_SECRET_KEY: "${ESCAPED_JWT_KEY}"
+                env_file:
+                  - ./.env
                 depends_on:
                   db:
                     condition: service_healthy
@@ -79,15 +68,15 @@ jobs:
               db:
                 image: mysql:8.0
                 container_name: mysql-db
-                environment:
-                  MYSQL_DATABASE: "${{ secrets.DB_NAME }}"
-                  MYSQL_ROOT_PASSWORD: "${ESCAPED_DB_ROOT_PASSWORD}"
-                  MYSQL_USER: "${{ secrets.DB_USERNAME }}"
-                  MYSQL_PASSWORD: "${ESCAPED_DB_PASSWORD}"
+                env_file:
+                  - ./.env
                 volumes:
                   - db_data:/var/lib/mysql
                 healthcheck:
-                  test: ["CMD-SHELL", "mysqladmin ping -h localhost -u'${{ secrets.DB_USERNAME }}' -p'${ESCAPED_DB_ROOT_PASSWORD}' --silent"]
+                  test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${DB_ROOT_PASSWORD} --silent"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 10
                 networks:
                   - app-network
                 restart: always
@@ -99,11 +88,21 @@ jobs:
             volumes:
               db_data:
             EOF
-
+            
+            cat <<'EOF' > .env
+            DB_URL="jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true"
+            DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            DB_NAME="${{ secrets.DB_NAME }}"
+            DB_ROOT_PASSWORD="${{ secrets.DB_ROOT_PASSWORD }}"
+            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+            EOF
+            
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
-            docker-compose down
-            docker volume prune -f
+            docker-compose down --volumes
             docker-compose pull
             docker-compose up -d
             
