@@ -7,7 +7,6 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +19,14 @@ jobs:
           cache: 'gradle'
 
       - name: Build Spring Boot application
-        run: ./gradlew clean assemble --no-daemon --info -Djwt.secret="${{ secrets.JWT_SECRET_KEY }}" -Dspring.datasource.url="${{ secrets.DB_URL }}" -Dspring.datasource.username="${{ secrets.DB_USERNAME }}" -Dspring.datasource.password="${{ secrets.DB_PASSWORD }}" -Dspring.security.oauth2.client.registration.google.client-id="${{ secrets.GOOGLE_CLIENT_ID }}" -Dspring.security.oauth2.client.registration.google.client-secret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+        run: |
+          ./gradlew clean assemble --no-daemon --info \
+            -Djwt.secret="${{ secrets.JWT_SECRET_KEY }}" \
+            -Dspring.datasource.url="${{ secrets.DB_URL }}" \
+            -Dspring.datasource.username="${{ secrets.DB_USERNAME }}" \
+            -Dspring.datasource.password="${{ secrets.DB_PASSWORD }}" \
+            -Dspring.security.oauth2.client.registration.google.client-id="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            -Dspring.security.oauth2.client.registration.google.client-secret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
 
       - name: Docker Login to Docker Hub
         uses: docker/login-action@v3
@@ -36,39 +42,41 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy to EC2
+      - name: Deploy to EC2 (docker-compose only)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            set -e
-            cd /home/ec2-user/dnd-13th-3-backend
-            
-            # .env 생성
-            echo "DB_URL=jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true" > .env
-            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-            echo "DB_NAME=minu" >> .env
-            echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env
-            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
-            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
-            echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
-            echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
-            
-            docker logout || true
+            set -euo pipefail
+            APP_DIR="/home/ec2-user/dnd-13th-3-backend"
+            cd "$APP_DIR"
 
-            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            
-            # 기존 컨테이너 중지
+            if ! command -v docker-compose >/dev/null 2>&1; then
+              if [ -x /usr/libexec/docker/cli-plugins/docker-compose ]; then
+                sudo ln -sf /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
+              fi
+            fi
+
+            docker-compose version || { echo "docker-compose 명령을 찾을 수 없음"; exit 1; }
+
+            cat > .env <<'EOF'
+            DB_URL=jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=minu
+            DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            EOF
+
             docker-compose down || true
-            
-            # Public 이미지 pull 후 재기동
             docker-compose pull
             docker-compose up -d --force-recreate --remove-orphans
-            
-            # 안 쓰는 이미지 정리
             docker image prune -f
+  
+
