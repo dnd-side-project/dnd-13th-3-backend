@@ -46,12 +46,51 @@ jobs:
           script: |
             set -euo pipefail
             APP_DIR="/home/ec2-user/dnd-13th-3-backend"
+            mkdir -p "$APP_DIR"
             cd "$APP_DIR"
-
-            # 도커 로그인
+            
+            cat <<'EOF' > docker-compose.yml
+            services:
+              app:
+                image: ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest
+                container_name: spring-app
+                ports:
+                  - "8080:8080"
+                env_file:
+                  - ./.env
+                depends_on:
+                  db:
+                    condition: service_healthy
+                networks:
+                  - app-network
+                restart: always
+            
+              db:
+                image: mysql:8.0
+                container_name: mysql-db
+                env_file:
+                  - ./.env
+                volumes:
+                  - db_data:/var/lib/mysql
+                healthcheck:
+                  test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${DB_ROOT_PASSWORD} --silent"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 10
+                networks:
+                  - app-network
+                restart: always
+            
+            networks:
+              app-network:
+                driver: bridge
+            
+            volumes:
+              db_data:
+            EOF
+            
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-            # cat과 EOF를 사용해 .env 파일을 안전하게 생성
+            
             cat <<'EOF' > .env
             DB_URL="jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true"
             DB_USERNAME="${{ secrets.DB_USERNAME }}"
@@ -63,9 +102,9 @@ jobs:
             JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
             EOF
             
-            # docker-compose를 사용해 애플리케이션을 실행
+            docker-compose down
+            docker volume prune -f
             docker-compose pull
-            docker-compose up -d --force-recreate --remove-orphans
-
-            # 사용하지 않는 도커 이미지 정리
+            docker-compose up -d
+            
             docker image prune -af
