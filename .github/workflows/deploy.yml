@@ -78,6 +78,7 @@ jobs:
                   interval: 10s
                   timeout: 5s
                   retries: 10
+                  start_period: 30s
                 networks:
                   - app-network
                 restart: always
