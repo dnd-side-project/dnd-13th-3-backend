@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: jonghoon714/dnd-13th-3-backend:latest
     container_name: spring-app
     ports:
       - "8080:8080"
