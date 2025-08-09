@@ -1,10 +1,8 @@
 name: CI/CD Pipeline for Spring Boot on EC2
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - develop
+  push:
+    branches: [ develop ]
 
 jobs:
   build-and-push:
