@@ -45,18 +45,30 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             cd /home/ec2-user/dnd-13th-3-backend
+            
+            # .env 생성
             echo "DB_URL=jdbc:mysql://db:3306/minu?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true" > .env
             echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
             echo "DB_NAME=minu" >> .env
-            echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env  
+            echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
             echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
+            echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
+            
+            # 최신 코드 동기화
             git fetch --all || true
             git reset --hard origin/develop || true
-            docker-compose down || true
-            docker-compose build --pull
-            docker-compose up -d --force-recreate
+            
+            # 기존 컨테이너 중지
+            docker compose down || true
+            
+            # Public 이미지 pull 후 재기동
+            docker compose pull
+            docker compose up -d --force-recreate
+            
+            # 안 쓰는 이미지 정리
             docker image prune -f
