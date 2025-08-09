@@ -15,15 +15,12 @@ services:
   db:
     image: mysql:8.0
     container_name: mysql-db
-    environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+    env_file:
+      - ./.env
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p${DB_ROOT_PASSWORD} --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${DB_ROOT_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
