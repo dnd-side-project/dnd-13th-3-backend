@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.minu.dnd13th3backend.user.type.GoalType;
+import org.minu.dnd13th3backend.user.type.ScreenTimeGoalType;
 
 @Entity
 @Table(name = "profile")
@@ -38,13 +40,6 @@ public class Profile {
     @Column(name = "screen_time_goal_custom", length = 100)
     private String screenTimeGoalCustom;
 
-    public enum GoalType {
-        FOCUS_IMPROVEMENT, SLEEP_REGULARITY, HEALTH_CARE, NO_SCREEN, CUSTOM
-    }
-
-    public enum ScreenTimeGoalType {
-        TWO_HOURS, FOUR_HOURS, SIX_HOURS, EIGHT_HOURS, CUSTOM
-    }
 
     @Builder
     private Profile(User user, String nickname, GoalType goalType, String goalCustom,
