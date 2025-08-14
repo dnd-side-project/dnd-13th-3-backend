@@ -12,6 +12,8 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Random;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -21,6 +23,7 @@ public class AuthService {
     private final OauthInfoRepository oauthInfoRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final Random random = new Random();
 
     public TokenResponse processOAuth2Login(OAuth2User oauth2User) {
         if (oauth2User == null) {
@@ -43,8 +46,10 @@ public class AuthService {
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId().toString());
         
         refreshTokenService.storeRefreshToken(user.getId().toString(), refreshToken);
+        
+        Integer characterIndex = generateRandomCharacterIndex();
 
-        return TokenResponse.of(accessToken, refreshToken);
+        return TokenResponse.of(accessToken, refreshToken, characterIndex);
     }
 
     private OauthInfo createNewUser(String googleId, String email, String name) {
@@ -80,8 +85,10 @@ public class AuthService {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId().toString());
         
         refreshTokenService.storeRefreshToken(user.getId().toString(), newRefreshToken);
+        
+        Integer characterIndex = generateRandomCharacterIndex();
 
-        return TokenResponse.of(newAccessToken, newRefreshToken);
+        return TokenResponse.of(newAccessToken, newRefreshToken, characterIndex);
     }
     
     public String getUserIdFromToken(String accessToken) {
@@ -89,5 +96,9 @@ public class AuthService {
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "유효하지 않은 액세스 토큰입니다.");
         }
         return jwtTokenProvider.getSubject(accessToken);
+    }
+    
+    private Integer generateRandomCharacterIndex() {
+        return random.nextInt(6) + 1;
     }
 }
