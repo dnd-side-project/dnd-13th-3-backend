@@ -7,12 +7,12 @@ import org.minu.dnd13th3backend.screentime.dto.response.ScreenTimePostResponse;
 import org.minu.dnd13th3backend.screentime.entity.ScreenTime;
 import org.minu.dnd13th3backend.screentime.service.ScreenTimeService;
 import org.minu.dnd13th3backend.user.entity.User;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/screentime")
@@ -31,5 +31,15 @@ public class ScreenTimeController {
         ScreenTimePostResponse response = new ScreenTimePostResponse(screenTime);
 
         return ResponseEntity.ok(ResponseDto.success("스크린타임이 성공적으로 등록/갱신되었습니다.", response));
+    }
+
+    @GetMapping
+    public ResponseEntity<ResponseDto<?>> getScreenTime(
+            @RequestParam(name = "period") String period,
+            @RequestParam(name = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal User user
+    ) {
+        Object responseData = screenTimeService.getScreenTime(period, date, user);
+        return ResponseEntity.ok(ResponseDto.success("스크린타임 조회가 성공했습니다.", responseData));
     }
 }
