@@ -23,7 +23,14 @@ public class TokenResponse {
     )
     private final String refreshToken;
     
-    public static TokenResponse of(String accessToken, String refreshToken) {
-        return new TokenResponse(accessToken, refreshToken);
+    @Schema(
+            description = "캐릭터 인덱스 (1-6)",
+            example = "3",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private final Integer characterIndex;
+    
+    public static TokenResponse of(String accessToken, String refreshToken, Integer characterIndex) {
+        return new TokenResponse(accessToken, refreshToken, characterIndex);
     }
 }
