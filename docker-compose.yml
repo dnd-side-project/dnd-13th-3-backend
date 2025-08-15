@@ -23,6 +23,8 @@ services:
     image: mysql:8.0
     container_name: mysql-db
     restart: always
+    ports:
+      - "3306:3306"
     env_file:
       - ./.env
     volumes:
