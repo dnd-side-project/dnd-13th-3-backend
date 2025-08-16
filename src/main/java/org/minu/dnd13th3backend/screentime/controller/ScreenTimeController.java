@@ -2,8 +2,7 @@ package org.minu.dnd13th3backend.screentime.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.minu.dnd13th3backend.common.dto.ResponseDto;
-import org.minu.dnd13th3backend.screentime.dto.request.ScreenTimePostRequest;
-import org.minu.dnd13th3backend.screentime.dto.response.ScreenTimePostResponse;
+import org.minu.dnd13th3backend.screentime.dto.response.ScreenTimeGenerateResponse;
 import org.minu.dnd13th3backend.screentime.entity.ScreenTime;
 import org.minu.dnd13th3backend.screentime.service.ScreenTimeService;
 import org.minu.dnd13th3backend.user.entity.User;
@@ -22,15 +21,12 @@ public class ScreenTimeController {
     private final ScreenTimeService screenTimeService;
 
     @PostMapping
-    public ResponseEntity<ResponseDto<ScreenTimePostResponse>> registerScreenTime(
-            @RequestBody ScreenTimePostRequest requestDto,
+    public ResponseEntity<ResponseDto<ScreenTimeGenerateResponse>> generateScreenTime(
             @AuthenticationPrincipal User user
     ) {
-        ScreenTime screenTime = screenTimeService.registerOrUpdateScreenTime(requestDto, user);
-
-        ScreenTimePostResponse response = new ScreenTimePostResponse(screenTime);
-
-        return ResponseEntity.ok(ResponseDto.success("스크린타임이 성공적으로 등록/갱신되었습니다.", response));
+        ScreenTime screenTime = screenTimeService.generateAndSaveScreenTime(user);
+        ScreenTimeGenerateResponse response = new ScreenTimeGenerateResponse(screenTime);
+        return ResponseEntity.ok(ResponseDto.success("스크린타임이 성공적으로 생성/갱신되었습니다.", response));
     }
 
     @GetMapping
@@ -40,6 +36,6 @@ public class ScreenTimeController {
             @AuthenticationPrincipal User user
     ) {
         Object responseData = screenTimeService.getScreenTime(period, date, user);
-        return ResponseEntity.ok(ResponseDto.success("스크린타임 조회가 성공했습니다.", responseData));
+        return ResponseEntity.ok(ResponseDto.success("스크린타임 조회에 성공했습니다.", responseData));
     }
 }
