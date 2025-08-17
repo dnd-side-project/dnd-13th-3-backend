@@ -41,4 +41,7 @@ public class User {
         this.name = name;
         this.email = email;
     }
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Profile profile;
 }
