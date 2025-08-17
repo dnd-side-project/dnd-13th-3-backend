@@ -13,6 +13,7 @@ import org.minu.dnd13th3backend.auth.dto.TokenResponse;
 import org.minu.dnd13th3backend.auth.service.AuthService;
 import org.minu.dnd13th3backend.auth.service.RefreshTokenService;
 import org.minu.dnd13th3backend.auth.service.TokenBlacklistService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -28,15 +29,19 @@ public class AuthController {
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
     private final TokenBlacklistService tokenBlacklistService;
+    
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
 
     @Operation(hidden = true)
     @GetMapping("/oauth2/success")  
     public RedirectView oauth2Success(@AuthenticationPrincipal OAuth2User oauth2User) {
         TokenResponse tokenResponse = authService.processOAuth2Login(oauth2User);
         
-        String frontendUrl = "http://localhost:3000/login/success" +
+        String frontendUrl = frontendBaseUrl + "/login/success" +
                 "?accessToken=" + tokenResponse.getAccessToken() +
-                "&refreshToken=" + tokenResponse.getRefreshToken();
+                "&refreshToken=" + tokenResponse.getRefreshToken() +
+                "&characterIndex=" + tokenResponse.getCharacterIndex();
         
         return new RedirectView(frontendUrl);
     }
