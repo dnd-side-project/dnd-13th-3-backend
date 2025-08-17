@@ -1,4 +1,4 @@
-package org.minu.dnd13th3backend.challenge.dto;
+package org.minu.dnd13th3backend.challenge.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
