@@ -74,6 +74,8 @@ jobs:
               db:
                 image: mysql:8.0
                 container_name: mysql-db
+                ports:
+                  - "3306:3306"
                 env_file:
                   - ./.env
                 volumes:
