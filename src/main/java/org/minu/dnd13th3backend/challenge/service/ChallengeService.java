@@ -82,20 +82,19 @@ public class ChallengeService {
                     );
 
                     long currentTimeMinutes = screenTimes.stream()
-                            .mapToLong(ScreenTime::getScreentimeMinutes)
+                            .mapToLong(st -> st.getInstagramMinutes() + st.getYoutubeMinutes() + st.getKakaotalkMinutes() + st.getChromeMinutes())
                             .sum();
 
                     double achievementRate;
                     if (challenge.getGoalTimeMinutes() > 0) {
                         double usageRate = ((double) currentTimeMinutes / challenge.getGoalTimeMinutes()) * 100.0;
-
                         achievementRate = Math.max(0, 100.0 - usageRate);
                     } else {
                         achievementRate = (currentTimeMinutes == 0) ? 100.0 : 0.0;
                     }
 
                     String status;
-                    if (isCompletedChallenge) {
+                    if (LocalDate.now().isAfter(challenge.getEndDate())) {
                         status = (currentTimeMinutes <= challenge.getGoalTimeMinutes()) ? "달성" : "실패";
                     } else {
                         status = "진행 중";

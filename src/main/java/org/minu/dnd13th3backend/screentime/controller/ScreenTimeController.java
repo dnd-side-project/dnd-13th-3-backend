@@ -25,7 +25,7 @@ public class ScreenTimeController {
             @AuthenticationPrincipal User user
     ) {
         ScreenTime screenTime = screenTimeService.generateAndSaveScreenTime(user);
-        ScreenTimeGenerateResponse response = new ScreenTimeGenerateResponse(screenTime);
+        ScreenTimeGenerateResponse response = ScreenTimeGenerateResponse.from(screenTime);
         return ResponseEntity.ok(ResponseDto.success("스크린타임이 성공적으로 생성/갱신되었습니다.", response));
     }
 
