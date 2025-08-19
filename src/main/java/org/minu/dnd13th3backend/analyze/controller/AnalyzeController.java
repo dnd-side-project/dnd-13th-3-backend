@@ -25,8 +25,8 @@ public class AnalyzeController {
     private final AnalyzeService analyzeService;
 
     @Operation(
-            summary = "AI 피드백 조회",
-            description = "기간과 유형을 지정하여 AI 피드백을 조회합니다. period=day|week, type은 screentime, timer 중 선택 가능합니다. 기존 피드백이 있으면 캐시된 결과를 반환합니다."
+            summary = "주간 AI 피드백 조회",
+            description = "주간 AI 피드백을 조회합니다. type은 screentime, timer 중 선택 가능합니다. 기존 피드백이 있으면 캐시된 결과를 반환합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -58,7 +58,7 @@ public class AnalyzeController {
                     description = "잘못된 요청 파라미터",
                     content = @Content(
                             examples = @ExampleObject(
-                                    value = "{\"status\":400,\"message\":\"유효하지 않은 period 또는 type 파라미터입니다.\"}"
+                                    value = "{\"status\":400,\"message\":\"유효하지 않은 type 파라미터입니다.\"}"
                             )
                     )
             ),
@@ -75,13 +75,6 @@ public class AnalyzeController {
     @GetMapping("/ai-feedback")
     public ResponseEntity<AiFeedbackResponse> getAiFeedback(
             @Parameter(
-                    description = "분석 기간 (day: 일간, week: 주간)",
-                    required = true,
-                    example = "day"
-            )
-            @RequestParam("period") String period,
-            
-            @Parameter(
                     description = "분석 유형 (screentime, timer)",
                     required = true,
                     example = "screentime"
@@ -90,7 +83,7 @@ public class AnalyzeController {
             
             @AuthenticationPrincipal User user) {
         
-        AiFeedbackResponse response = analyzeService.generateAiFeedback(user.getId(), period, type);
+        AiFeedbackResponse response = analyzeService.generateAiFeedback(user.getId(), type);
         
         return ResponseEntity.ok(response);
     }

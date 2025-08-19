@@ -34,16 +34,16 @@ public class AnalyzeService {
     private final AiFeedbackRepository aiFeedbackRepository;
     private final GeminiService geminiService;
 
-    public AiFeedbackResponse generateAiFeedback(Long userId, String period, String type) {
-        validateParameters(period, type);
+    public AiFeedbackResponse generateAiFeedback(Long userId, String type) {
+        validateParameters(type);
         validateUser(userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         LocalDate today = LocalDate.now();
-        FeedbackType feedbackType = "day".equals(period) ? FeedbackType.DAILY : FeedbackType.WEEKLY;
-        LocalDate referenceDate = calculateReferenceDate(today, feedbackType);
+        FeedbackType feedbackType = FeedbackType.WEEKLY;
+        LocalDate referenceDate = calculateReferenceDate(today);
 
         // 기존 유효한 피드백이 있는지 확인
         AiFeedback existingFeedback = aiFeedbackRepository.findValidFeedback(
@@ -53,25 +53,21 @@ public class AnalyzeService {
         if (existingFeedback != null) {
             // 기존 피드백 반환
             List<String> feedbackList = parseFeedbackContent(existingFeedback.getContent());
-            LocalDate[] dateRange = calculateDateRange(referenceDate, feedbackType);
-            return AiFeedbackResponse.from(period, dateRange[0], dateRange[1], type, feedbackList);
+            LocalDate[] dateRange = calculateDateRange(referenceDate);
+            return AiFeedbackResponse.from("week", dateRange[0], dateRange[1], type, feedbackList);
         }
 
         // 새로운 피드백 생성
-        LocalDate[] dateRange = calculateDateRange(referenceDate, feedbackType);
+        LocalDate[] dateRange = calculateDateRange(referenceDate);
         List<String> feedback = generateNewAiFeedback(user, dateRange[0], dateRange[1], type);
         
         // 피드백 저장
         saveFeedback(user, feedbackType, referenceDate, feedback);
 
-        return AiFeedbackResponse.from(period, dateRange[0], dateRange[1], type, feedback);
+        return AiFeedbackResponse.from("week", dateRange[0], dateRange[1], type, feedback);
     }
 
-    private void validateParameters(String period, String type) {
-        if (!List.of("day", "week").contains(period)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
+    private void validateParameters(String type) {
         if (!List.of("screentime", "timer").contains(type)) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
@@ -83,30 +79,22 @@ public class AnalyzeService {
         }
     }
 
-    private LocalDate calculateReferenceDate(LocalDate today, FeedbackType feedbackType) {
-        if (feedbackType == FeedbackType.DAILY) {
-            return today;
-        } else {
-            // 주간의 경우 해당 주의 월요일을 기준일로 사용
-            WeekFields weekFields = WeekFields.of(Locale.getDefault());
-            return today.with(weekFields.dayOfWeek(), 1);
-        }
+    private LocalDate calculateReferenceDate(LocalDate today) {
+        // 해당 주의 월요일을 기준일로 사용
+        WeekFields weekFields = WeekFields.of(Locale.getDefault());
+        return today.with(weekFields.dayOfWeek(), 1);
     }
 
-    private LocalDate[] calculateDateRange(LocalDate referenceDate, FeedbackType feedbackType) {
-        if (feedbackType == FeedbackType.DAILY) {
-            return new LocalDate[]{referenceDate, referenceDate};
-        } else {
-            WeekFields weekFields = WeekFields.of(Locale.getDefault());
-            LocalDate startOfWeek = referenceDate.with(weekFields.dayOfWeek(), 1);
-            LocalDate endOfWeek = referenceDate.with(weekFields.dayOfWeek(), 7);
-            return new LocalDate[]{startOfWeek, endOfWeek};
-        }
+    private LocalDate[] calculateDateRange(LocalDate referenceDate) {
+        WeekFields weekFields = WeekFields.of(Locale.getDefault());
+        LocalDate startOfWeek = referenceDate.with(weekFields.dayOfWeek(), 1);
+        LocalDate endOfWeek = referenceDate.with(weekFields.dayOfWeek(), 7);
+        return new LocalDate[]{startOfWeek, endOfWeek};
     }
 
     private void saveFeedback(User user, FeedbackType feedbackType, LocalDate referenceDate, List<String> feedback) {
         String content = String.join("\n", feedback);
-        LocalDateTime expiresAt = calculateExpiresAt(feedbackType);
+        LocalDateTime expiresAt = calculateExpiresAt();
 
         AiFeedback aiFeedback = AiFeedback.builder()
                 .user(user)
@@ -119,15 +107,10 @@ public class AnalyzeService {
         aiFeedbackRepository.save(aiFeedback);
     }
 
-    private LocalDateTime calculateExpiresAt(FeedbackType feedbackType) {
+    private LocalDateTime calculateExpiresAt() {
         LocalDateTime now = LocalDateTime.now();
-        if (feedbackType == FeedbackType.DAILY) {
-            // 일간 피드백은 다음날 오전 6시까지 유효
-            return now.plusDays(1).withHour(6).withMinute(0).withSecond(0).withNano(0);
-        } else {
-            // 주간 피드백은 다음주 월요일 오전 6시까지 유효
-            return now.plusWeeks(1).withHour(6).withMinute(0).withSecond(0).withNano(0);
-        }
+        // 주간 피드백은 다음주 월요일 오전 6시까지 유효
+        return now.plusWeeks(1).withHour(6).withMinute(0).withSecond(0).withNano(0);
     }
 
     private List<String> parseFeedbackContent(String content) {
