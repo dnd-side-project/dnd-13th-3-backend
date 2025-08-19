@@ -28,6 +28,7 @@ public class ChallengeGetResponse {
 
     private List<ParticipantRecord> participants;
 
+    // 참가자 한 명의 정보를 담는 내부 클래스
     @Getter
     @Builder
     public static class ParticipantRecord {
@@ -36,6 +37,18 @@ public class ChallengeGetResponse {
 
         @JsonProperty("current_time_minutes")
         private long currentTimeMinutes;
+
+        @JsonProperty("instagram_minutes")
+        private long instagramMinutes;
+
+        @JsonProperty("youtube_minutes")
+        private long youtubeMinutes;
+
+        @JsonProperty("kakaotalk_minutes")
+        private long kakaotalkMinutes;
+
+        @JsonProperty("chrome_minutes")
+        private long chromeMinutes;
 
         @JsonProperty("achievement_rate")
         private double achievementRate;

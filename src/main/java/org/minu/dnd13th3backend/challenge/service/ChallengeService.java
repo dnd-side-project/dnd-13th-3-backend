@@ -57,9 +57,7 @@ public class ChallengeService {
     public ChallengeGetResponse getChallenge(ChallengeType type, LocalDate startDate, LocalDate endDate, User user) {
 
         List<ChallengeParticipant> userParticipation;
-        boolean isCompletedChallenge = (startDate != null && endDate != null);
-
-        if (isCompletedChallenge) {
+        if (startDate != null && endDate != null) {
             userParticipation = participantRepository.findByUserAndChallenge_TypeAndChallenge_StartDateAndChallenge_EndDate(user, type, startDate, endDate);
         } else {
             LocalDate today = LocalDate.now();
@@ -81,9 +79,14 @@ public class ChallengeService {
                             participantUser.getId(), challenge.getStartDate(), challenge.getEndDate()
                     );
 
-                    long currentTimeMinutes = screenTimes.stream()
-                            .mapToLong(st -> st.getInstagramMinutes() + st.getYoutubeMinutes() + st.getKakaotalkMinutes() + st.getChromeMinutes())
-                            .sum();
+                    long totalInsta = 0, totalYoutube = 0, totalKakaotalk = 0, totalChrome = 0;
+                    for (ScreenTime st : screenTimes) {
+                        totalInsta += st.getInstagramMinutes();
+                        totalYoutube += st.getYoutubeMinutes();
+                        totalKakaotalk += st.getKakaotalkMinutes();
+                        totalChrome += st.getChromeMinutes();
+                    }
+                    long currentTimeMinutes = totalInsta + totalYoutube + totalKakaotalk + totalChrome;
 
                     double achievementRate;
                     if (challenge.getGoalTimeMinutes() > 0) {
@@ -104,6 +107,10 @@ public class ChallengeService {
                             .userId(participantUser.getId())
                             .nickname(participantUser.getProfile().getNickname())
                             .currentTimeMinutes(currentTimeMinutes)
+                            .instagramMinutes(totalInsta)
+                            .youtubeMinutes(totalYoutube)
+                            .kakaotalkMinutes(totalKakaotalk)
+                            .chromeMinutes(totalChrome)
                             .achievementRate(achievementRate)
                             .status(status)
                             .build();
