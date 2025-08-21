@@ -2,6 +2,7 @@ package org.minu.dnd13th3backend.challenge.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder; // import 추가
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -23,4 +24,11 @@ public class InviteCode {
     private String code;
 
     private LocalDate expiresAt;
+
+    @Builder
+    public InviteCode(Challenge challenge, String code, LocalDate expiresAt) {
+        this.challenge = challenge;
+        this.code = code;
+        this.expiresAt = expiresAt;
+    }
 }
