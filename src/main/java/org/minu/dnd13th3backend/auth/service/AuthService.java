@@ -38,8 +38,16 @@ public class AuthService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "필수 OAuth2 정보가 누락되었습니다.");
         }
 
+        // 기존 사용자인지 확인
+        boolean isNewUser = false;
         OauthInfo oauthInfo = oauthInfoRepository.findByOauthIdAndProvider(googleId, "google")
-                .orElseGet(() -> createNewUser(googleId, email, name));
+                .orElse(null);
+        
+        if (oauthInfo == null) {
+            // 신규 사용자 생성
+            oauthInfo = createNewUser(googleId, email, name);
+            isNewUser = true;
+        }
 
         User user = oauthInfo.getUser();
         String accessToken = jwtTokenProvider.createAccessToken(user.getId().toString());
@@ -49,7 +57,7 @@ public class AuthService {
         
         Integer characterIndex = generateRandomCharacterIndex();
 
-        return TokenResponse.of(accessToken, refreshToken, characterIndex);
+        return TokenResponse.of(accessToken, refreshToken, characterIndex, isNewUser);
     }
 
     private OauthInfo createNewUser(String googleId, String email, String name) {
@@ -88,7 +96,7 @@ public class AuthService {
         
         Integer characterIndex = generateRandomCharacterIndex();
 
-        return TokenResponse.of(newAccessToken, newRefreshToken, characterIndex);
+        return TokenResponse.of(newAccessToken, newRefreshToken, characterIndex, false);
     }
     
     public String getUserIdFromToken(String accessToken) {

@@ -41,7 +41,10 @@ public class AuthController {
         String frontendUrl = frontendBaseUrl + "/login/success" +
                 "?accessToken=" + tokenResponse.getAccessToken() +
                 "&refreshToken=" + tokenResponse.getRefreshToken() +
-                "&characterIndex=" + tokenResponse.getCharacterIndex();
+
+                "&characterIndex=" + tokenResponse.getCharacterIndex() +
+                "&isNewUser=" + tokenResponse.getIsNewUser();
+
         
         return new RedirectView(frontendUrl);
     }
@@ -68,7 +71,8 @@ public class AuthController {
                                     {
                                       "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzU0Mjg3NTQ1LCJleHAiOjE3NTQyODkzNDV9...",
                                       "refreshToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzU0Mjg3NTQ1LCJleHAiOjE3NTQ4OTIzNDV9...",
-                                      "characterIndex": 3
+                                      "characterIndex": 3,
+                                      "isNewUser": false
                                     }
                                     """
                             )
