@@ -49,3 +49,8 @@ jwt:
   secret: ${JWT_SECRET_KEY}
   access-token-validity-in-seconds: 1800
   refresh-token-validity-in-seconds: 604800
+
+# Gemini API 설정
+gemini:
+  api:
+    key: ${GEMINI_API_KEY}
