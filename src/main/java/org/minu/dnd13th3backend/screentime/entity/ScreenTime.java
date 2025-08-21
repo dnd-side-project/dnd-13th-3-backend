@@ -23,16 +23,26 @@ public class ScreenTime {
     private User user;
 
     private LocalDate date;
-    private Integer screentimeMinutes;
+
+    private int instagramMinutes;
+    private int youtubeMinutes;
+    private int kakaotalkMinutes;
+    private int chromeMinutes;
 
     @Builder
-    public ScreenTime(User user, LocalDate date, Integer screentimeMinutes) {
+    public ScreenTime(User user, LocalDate date, int instagramMinutes, int youtubeMinutes, int kakaotalkMinutes, int chromeMinutes) {
         this.user = user;
         this.date = date;
-        this.screentimeMinutes = screentimeMinutes;
+        this.instagramMinutes = instagramMinutes;
+        this.youtubeMinutes = youtubeMinutes;
+        this.kakaotalkMinutes = kakaotalkMinutes;
+        this.chromeMinutes = chromeMinutes;
     }
 
-    public void updateScreenTime(Integer minutes) {
-        this.screentimeMinutes = minutes;
+    public void updateScreenTime(int instagramMinutes, int youtubeMinutes, int kakaotalkMinutes, int chromeMinutes) {
+        this.instagramMinutes = instagramMinutes;
+        this.youtubeMinutes = youtubeMinutes;
+        this.kakaotalkMinutes = kakaotalkMinutes;
+        this.chromeMinutes = chromeMinutes;
     }
 }

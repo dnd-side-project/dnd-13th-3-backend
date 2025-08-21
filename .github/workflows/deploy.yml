@@ -30,7 +30,7 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest .
+          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest
 
   deploy:
@@ -50,6 +50,7 @@ jobs:
             cd "$APP_DIR"
             
             cat <<'EOF' > docker-compose.yml
+            version: '3.8'
             services:
               app:
                 image: ${{ secrets.DOCKER_USERNAME }}/dnd-13th-3-backend:latest
@@ -58,9 +59,14 @@ jobs:
                   - "8080:8080"
                 env_file:
                   - ./.env
+                environment:
+                  - PROFILE=prod
+                  - SPRING_DATA_REDIS_HOST=redis
                 depends_on:
                   db:
                     condition: service_healthy
+                  redis:
+                    condition: service_started
                 networks:
                   - app-network
                 restart: always
@@ -68,6 +74,8 @@ jobs:
               db:
                 image: mysql:8.0
                 container_name: mysql-db
+                ports:
+                  - "3306:3306"
                 env_file:
                   - ./.env
                 volumes:
@@ -82,6 +90,15 @@ jobs:
                   - app-network
                 restart: always
             
+              redis:
+                image: redis:latest
+                container_name: redis-cache
+                restart: always
+                ports:
+                  - "6379:6379"
+                networks:
+                  - app-network
+
             networks:
               app-network:
                 driver: bridge
@@ -100,14 +117,17 @@ jobs:
             MYSQL_USER="${{ secrets.DB_USERNAME }}"
             MYSQL_PASSWORD="${{ secrets.DB_PASSWORD }}"
             
+            SPRING_DATA_REDIS_PORT=6379
+
             GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
             GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
             JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
+            FRONTEND_BASE_URL="${{ secrets.FRONTEND_BASE_URL }}"
             EOF
             
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
-            docker-compose down --volumes
+            docker-compose down
             docker-compose pull
             docker-compose up -d
             
