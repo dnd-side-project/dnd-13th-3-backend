@@ -30,7 +30,14 @@ public class TokenResponse {
     )
     private final Integer characterIndex;
     
-    public static TokenResponse of(String accessToken, String refreshToken, Integer characterIndex) {
-        return new TokenResponse(accessToken, refreshToken, characterIndex);
+    @Schema(
+            description = "신규 가입 사용자 여부 (true: 신규 가입, false: 기존 사용자)",
+            example = "true",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private final Boolean isNewUser;
+    
+    public static TokenResponse of(String accessToken, String refreshToken, Integer characterIndex, Boolean isNewUser) {
+        return new TokenResponse(accessToken, refreshToken, characterIndex, isNewUser);
     }
 }
