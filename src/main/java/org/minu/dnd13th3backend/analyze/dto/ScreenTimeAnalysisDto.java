@@ -28,13 +28,13 @@ public class ScreenTimeAnalysisDto {
         }
 
         int totalMinutes = screenTimes.stream()
-                .mapToInt(ScreenTime::getScreentimeMinutes)
+                .mapToInt(st -> st.getInstagramMinutes() + st.getYoutubeMinutes() + st.getKakaotalkMinutes() + st.getChromeMinutes())
                 .sum();
 
         double avgMinutes = (double) totalMinutes / 7;
         
         int maxMinutes = screenTimes.stream()
-                .mapToInt(ScreenTime::getScreentimeMinutes)
+                .mapToInt(st -> st.getInstagramMinutes() + st.getYoutubeMinutes() + st.getKakaotalkMinutes() + st.getChromeMinutes())
                 .max()
                 .orElse(0);
 
