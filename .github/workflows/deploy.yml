@@ -123,6 +123,7 @@ jobs:
             GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
             JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
             FRONTEND_BASE_URL="${{ secrets.FRONTEND_BASE_URL }}"
+            GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
             EOF
             
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
