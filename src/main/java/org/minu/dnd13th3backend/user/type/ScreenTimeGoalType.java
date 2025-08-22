@@ -1,5 +1,6 @@
 package org.minu.dnd13th3backend.user.type;
 
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum ScreenTimeGoalType {
@@ -12,14 +13,15 @@ public enum ScreenTimeGoalType {
     private final String value;
     private final int minutes;
 
+
     ScreenTimeGoalType(String value, int minutes) {
         this.value = value;
         this.minutes = minutes;
     }
-
     public String getValue() {
         return value;
     }
+
 
     public int getMinutes() {
         return minutes;
@@ -50,3 +52,4 @@ public enum ScreenTimeGoalType {
         }
     }
 }
+

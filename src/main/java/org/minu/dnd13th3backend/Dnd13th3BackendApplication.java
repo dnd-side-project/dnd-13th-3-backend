@@ -2,8 +2,10 @@ package org.minu.dnd13th3backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class Dnd13th3BackendApplication {
 
     public static void main(String[] args) {

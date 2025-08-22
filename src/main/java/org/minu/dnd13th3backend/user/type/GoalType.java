@@ -1,12 +1,15 @@
 package org.minu.dnd13th3backend.user.type;
 
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+
 
 public enum GoalType {
     FOCUS_IMPROVEMENT, 
     SLEEP_REGULARITY, 
     HEALTH_CARE, 
     NO_SCREEN, 
+
     CUSTOM;
 
     @JsonCreator
@@ -33,4 +36,5 @@ public enum GoalType {
                 throw new IllegalArgumentException("Unknown GoalType: " + value);
         }
     }
+
 }
