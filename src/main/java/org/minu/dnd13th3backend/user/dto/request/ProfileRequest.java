@@ -65,8 +65,12 @@ public class ProfileRequest {
     }
 
     public ScreenTimeGoalType getScreenTimeGoalType() {
-        String type = screenTimeGoal.getType();
-        switch (type) {
+        String type = screenTimeGoal != null ? screenTimeGoal.getType() : null;
+        if (type == null) {
+            throw new IllegalArgumentException("Screen time goal type is null");
+        }
+
+        switch (type.toUpperCase()) {
             case "2HOURS": return ScreenTimeGoalType.TWO_HOURS;
             case "4HOURS": return ScreenTimeGoalType.FOUR_HOURS;
             case "6HOURS": return ScreenTimeGoalType.SIX_HOURS;
