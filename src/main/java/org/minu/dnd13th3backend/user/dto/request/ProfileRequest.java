@@ -48,7 +48,7 @@ public class ProfileRequest {
     @Schema(description = "스크린 타임 목표 정보")
     public static class ScreenTimeGoal {
         @NotNull(message = "스크린 타임 목표 타입은 필수입니다")
-        @Schema(description = "스크린 타임 목표 타입", example = "2HOURS", allowableValues = {"2HOURS", "4HOURS", "6HOURS", "8HOURS", "CUSTOM"})
+        @Schema(description = "스크린 타임 목표 타입", example = "2HOURS", allowableValues = {"2HOURS", "4HOURS", "6HOURS", "8HOURS", "120", "240", "360", "480", "CUSTOM"})
         private String type;
 
         @Size(max = 100, message = "커스텀 스크린 타임 목표는 100자 이하여야 합니다")
@@ -65,16 +65,18 @@ public class ProfileRequest {
     }
 
     public ScreenTimeGoalType getScreenTimeGoalType() {
-        String type = screenTimeGoal != null ? screenTimeGoal.getType() : null;
-        if (type == null) {
-            throw new IllegalArgumentException("Screen time goal type is null");
-        }
 
-        switch (type.toUpperCase()) {
-            case "2HOURS": return ScreenTimeGoalType.TWO_HOURS;
-            case "4HOURS": return ScreenTimeGoalType.FOUR_HOURS;
-            case "6HOURS": return ScreenTimeGoalType.SIX_HOURS;
-            case "8HOURS": return ScreenTimeGoalType.EIGHT_HOURS;
+        String type = screenTimeGoal.getType();
+        switch (type) {
+            case "2HOURS":
+            case "120": return ScreenTimeGoalType.TWO_HOURS;
+            case "4HOURS":
+            case "240": return ScreenTimeGoalType.FOUR_HOURS;
+            case "6HOURS":
+            case "360": return ScreenTimeGoalType.SIX_HOURS;
+            case "8HOURS":
+            case "480": return ScreenTimeGoalType.EIGHT_HOURS;
+
             case "CUSTOM": return ScreenTimeGoalType.CUSTOM;
             default: throw new IllegalArgumentException("Invalid screen time goal type: " + type);
         }
