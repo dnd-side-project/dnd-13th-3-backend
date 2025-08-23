@@ -19,13 +19,13 @@ public enum GoalType {
         }
         
         switch (value) {
+            case "규칙적인 수면 습관을 만들고 싶어요":
+                return SLEEP_REGULARITY;
             case "집중력을 높이고 산만함을 줄이고 싶어요":
                 return FOCUS_IMPROVEMENT;
-            case "수면 패턴을 개선하고 싶어요":
-                return SLEEP_REGULARITY;
-            case "건강 관리를 위해 스크린타임을 줄이고 싶어요":
+            case "눈 건강을 지키고 싶어요":
                 return HEALTH_CARE;
-            case "스크린 없는 시간을 늘리고 싶어요":
+            case "혼자 있는 시간 디지털 없이 보내보기":
                 return NO_SCREEN;
             case "custom":
                 return CUSTOM;
