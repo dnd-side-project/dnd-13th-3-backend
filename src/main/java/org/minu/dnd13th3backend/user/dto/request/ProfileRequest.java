@@ -65,6 +65,7 @@ public class ProfileRequest {
     }
 
     public ScreenTimeGoalType getScreenTimeGoalType() {
+
         String type = screenTimeGoal.getType();
         switch (type) {
             case "2HOURS":
@@ -75,6 +76,7 @@ public class ProfileRequest {
             case "360": return ScreenTimeGoalType.SIX_HOURS;
             case "8HOURS":
             case "480": return ScreenTimeGoalType.EIGHT_HOURS;
+
             case "CUSTOM": return ScreenTimeGoalType.CUSTOM;
             default: throw new IllegalArgumentException("Invalid screen time goal type: " + type);
         }
