@@ -3,7 +3,6 @@ package org.minu.dnd13th3backend.challenge.dto.request;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.minu.dnd13th3backend.challenge.type.ChallengeType;
 
 import java.time.LocalDate;
 
@@ -19,8 +18,6 @@ public class ChallengeCreateRequest {
 
     @JsonProperty("goal_time_minutes")
     private int goalTimeMinutes;
-
-    private ChallengeType type;
 
     private String title;
 }
