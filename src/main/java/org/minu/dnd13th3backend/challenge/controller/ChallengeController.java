@@ -3,13 +3,9 @@ package org.minu.dnd13th3backend.challenge.controller;
 import lombok.RequiredArgsConstructor;
 import org.minu.dnd13th3backend.challenge.dto.request.ChallengeCreateRequest;
 import org.minu.dnd13th3backend.challenge.dto.request.InviteJoinRequest;
-import org.minu.dnd13th3backend.challenge.dto.response.ChallengeCreateResponse;
-import org.minu.dnd13th3backend.challenge.dto.response.ChallengeGetResponse;
-import org.minu.dnd13th3backend.challenge.dto.response.InviteJoinResponse;
-import org.minu.dnd13th3backend.challenge.dto.response.InviteUrlCreateResponse;
+import org.minu.dnd13th3backend.challenge.dto.response.*;
 import org.minu.dnd13th3backend.challenge.entity.Challenge;
 import org.minu.dnd13th3backend.challenge.service.ChallengeService;
-import org.minu.dnd13th3backend.challenge.type.ChallengeType;
 import org.minu.dnd13th3backend.common.dto.ResponseDto;
 import org.minu.dnd13th3backend.user.entity.User;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -39,21 +35,29 @@ public class ChallengeController {
     }
 
     @GetMapping
-    public ResponseEntity<ResponseDto<ChallengeGetResponse>> getChallenge(
-            @RequestParam("type") ChallengeType type,
+    public ResponseEntity<ResponseDto<ChallengeListResponse>> getChallenges(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @AuthenticationPrincipal User user
     ) {
-        ChallengeGetResponse responseData = challengeService.getChallenge(type, startDate, endDate, user);
+        ChallengeListResponse responseData = challengeService.getChallenges(startDate, endDate, user);
+
+        if (responseData.getChallenges().isEmpty()) {
+            String message = (startDate != null && endDate != null) ?
+                    "해당 기간에 완료된 챌린지가 없습니다." :
+                    "참여 중인 챌린지가 없습니다.";
+            return ResponseEntity.ok(ResponseDto.success(message, responseData));
+        }
+
         return ResponseEntity.ok(ResponseDto.success("챌린지 조회가 성공했습니다.", responseData));
     }
 
-    @PostMapping("/inviteUrl")
+    @PostMapping("/inviteUrl/{challengeId}")
     public ResponseEntity<ResponseDto<InviteUrlCreateResponse>> createInviteUrl(
+            @PathVariable Long challengeId,
             @AuthenticationPrincipal User user
     ) {
-        String url = challengeService.generateInviteLink(user);
+        String url = challengeService.generateInviteLink(challengeId, user);
         InviteUrlCreateResponse response = new InviteUrlCreateResponse(url);
         return ResponseEntity.ok(ResponseDto.success("초대 링크가 성공적으로 생성되었습니다.", response));
     }

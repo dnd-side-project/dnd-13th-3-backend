@@ -3,7 +3,6 @@ package org.minu.dnd13th3backend.challenge.dto.response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
-import org.minu.dnd13th3backend.challenge.type.ChallengeType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.List;
 public class ChallengeGetResponse {
 
     private Long challengeId;
-    private ChallengeType type;
 
     @JsonProperty("start_date")
     private LocalDate startDate;
