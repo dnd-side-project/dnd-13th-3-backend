@@ -146,8 +146,8 @@ public class ProfileController {
         String accessToken = authHeader.replace("Bearer ", "");
         String userId = authService.getUserIdFromToken(accessToken);
         
-        profileService.createProfile(Long.valueOf(userId), request);
-        return ResponseEntity.ok(ProfileResponse.success("프로필이 성공적으로 등록되었습니다."));
+        Integer characterIndex = profileService.createProfile(Long.valueOf(userId), request);
+        return ResponseEntity.ok(ProfileResponse.success("프로필이 성공적으로 등록되었습니다.", characterIndex));
     }
 
     @Operation(

@@ -11,8 +11,15 @@ public class ProfileResponse {
 
     @Schema(description = "응답 메시지", example = "프로필이 성공적으로 등록되었습니다.")
     private String message;
+    
+    @Schema(description = "캐릭터 인덱스", example = "3")
+    private Integer characterIndex;
 
     public static ProfileResponse success(String message) {
-        return new ProfileResponse(message);
+        return new ProfileResponse(message, null);
+    }
+    
+    public static ProfileResponse success(String message, Integer characterIndex) {
+        return new ProfileResponse(message, characterIndex);
     }
 }

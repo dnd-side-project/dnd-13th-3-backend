@@ -14,6 +14,13 @@ import org.minu.dnd13th3backend.user.type.ScreenTimeGoalType;
 @Schema(description = "프로필 수정 요청")
 public class ProfileUpdateRequest {
 
+    @Size(max = 30, message = "닉네임은 30자 이하여야 합니다")
+    @Schema(description = "사용자 닉네임", example = "종훈", maxLength = 30)
+    private String nickname;
+
+    @Schema(description = "캐릭터 인덱스", example = "1")
+    private Integer characterIndex;
+
     @Valid
     @NotNull(message = "목표는 필수입니다")
     @Schema(description = "목표 정보")
