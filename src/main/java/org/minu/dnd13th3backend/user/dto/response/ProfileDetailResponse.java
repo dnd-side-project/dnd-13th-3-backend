@@ -17,6 +17,9 @@ public class ProfileDetailResponse {
     @Schema(description = "사용자 닉네임", example = "종훈")
     private String nickname;
 
+    @Schema(description = "캐릭터 인덱스", example = "1")
+    private Integer characterIndex;
+
     @Schema(description = "목표 정보")
     private Goal goal;
 
@@ -49,6 +52,7 @@ public class ProfileDetailResponse {
         return ProfileDetailResponse.builder()
                 .id(profile.getUserId().toString())
                 .nickname(profile.getNickname())
+                .characterIndex(profile.getCharacterIndex())
                 .goal(Goal.builder()
                         .type(profile.getGoalType())
                         .custom(profile.getGoalCustom())

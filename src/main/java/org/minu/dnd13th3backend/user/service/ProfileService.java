@@ -13,6 +13,8 @@ import org.minu.dnd13th3backend.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Random;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -20,6 +22,7 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
+    private final Random random = new Random();
 
     public ProfileDetailResponse getProfile(Long userId) {
         Profile profile = profileRepository.findById(userId)
@@ -29,7 +32,7 @@ public class ProfileService {
     }
 
     @Transactional
-    public void createProfile(Long userId, ProfileRequest request) {
+    public Integer createProfile(Long userId, ProfileRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -37,9 +40,12 @@ public class ProfileService {
             throw new BusinessException(ErrorCode.PROFILE_ALREADY_EXISTS);
         }
 
+        Integer characterIndex = generateRandomCharacterIndex();
+        
         Profile profile = Profile.builder()
                 .user(user)
                 .nickname(request.getNickname())
+                .characterIndex(characterIndex)
                 .goalType(request.getGoalType())
                 .goalCustom(request.getGoalCustom())
                 .screenTimeGoalType(request.getScreenTimeGoalType())
@@ -47,6 +53,7 @@ public class ProfileService {
                 .build();
 
         profileRepository.save(profile);
+        return characterIndex;
     }
 
     @Transactional
@@ -54,13 +61,21 @@ public class ProfileService {
         Profile profile = profileRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROFILE_NOT_FOUND));
 
+        String nickname = request.getNickname() != null ? request.getNickname() : profile.getNickname();
+        Integer characterIndex = request.getCharacterIndex() != null ? request.getCharacterIndex() : profile.getCharacterIndex();
+
         profile.updateProfile(
-                profile.getNickname(),
+                nickname,
                 request.getGoalType(),
                 request.getGoalCustom(),
                 request.getScreenTimeGoalType(),
-                request.getScreenTimeGoalCustom()
+                request.getScreenTimeGoalCustom(),
+                characterIndex
         );
+    }
+    
+    private Integer generateRandomCharacterIndex() {
+        return random.nextInt(6) + 1;
     }
 
 }
