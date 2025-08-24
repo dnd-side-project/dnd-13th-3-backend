@@ -9,3 +9,7 @@ spring:
 app:
   frontend:
     base-url: http://localhost:3000
+
+gemini:
+  api:
+    key: "AIzaSyD84j8iIE-2_DRpIFuT3qhCmd7inLCZjUQ"
