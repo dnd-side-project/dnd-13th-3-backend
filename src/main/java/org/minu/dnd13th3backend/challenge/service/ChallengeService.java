@@ -112,6 +112,7 @@ public class ChallengeService {
                                 return ChallengeGetResponse.ParticipantRecord.builder()
                                         .userId(participantUser.getId())
                                         .nickname(participantUser.getProfile().getNickname())
+                                        .characterIndex(participantUser.getProfile().getCharacterIndex())
                                         .currentTimeMinutes(currentTimeMinutes)
                                         .instagramMinutes(totalInsta)
                                         .youtubeMinutes(totalYoutube)
