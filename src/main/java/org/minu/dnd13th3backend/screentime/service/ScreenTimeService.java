@@ -129,13 +129,28 @@ public class ScreenTimeService {
     private ScreenTimeGetDailyResponse getDailyScreenTime(LocalDate date, User user) {
         LocalDate targetDate = (date == null) ? LocalDate.now() : date;
         ScreenTime screenTime = screenTimeRepository.findByUser_IdAndDate(user.getId(), targetDate).orElse(null);
-        return ScreenTimeGetDailyResponse.from(screenTime);
+
+        Profile profile = profileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException("해당 사용자의 프로필을 찾을 수 없습니다: " + user.getId()));
+        int goalMinutes = getGoalMinutes(profile);
+
+        String status = "NO_DATA";
+        if (screenTime != null) {
+            int totalMinutes = screenTime.getInstagramMinutes() + screenTime.getYoutubeMinutes() + screenTime.getKakaotalkMinutes() + screenTime.getChromeMinutes();
+            status = (totalMinutes > goalMinutes) ? "OVER" : "UNDER";
+        }
+
+        return ScreenTimeGetDailyResponse.from(screenTime, status);
     }
 
     private ScreenTimeGetWeeklyResponse getWeeklyScreenTime(LocalDate date, User user) {
         LocalDate today = (date == null) ? LocalDate.now() : date;
         LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
         LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+
+        Profile profile = profileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException("해당 사용자의 프로필을 찾을 수 없습니다: " + user.getId()));
+        int goalMinutes = getGoalMinutes(profile);
 
         List<ScreenTime> recordedTimes = screenTimeRepository.findByUser_IdAndDateBetween(user.getId(), startOfWeek, endOfWeek);
         Map<LocalDate, ScreenTime> recordedMap = recordedTimes.stream().collect(Collectors.toMap(ScreenTime::getDate, st -> st));
@@ -145,29 +160,36 @@ public class ScreenTimeService {
 
         for (LocalDate d = startOfWeek; !d.isAfter(endOfWeek); d = d.plusDays(1)) {
             ScreenTime st = recordedMap.get(d);
+            String status = "NO_DATA";
+            int dailyTotal = 0;
+
+            ScreenTimeGetWeeklyResponse.AppTimeDetails appTimes;
+
             if (st != null) {
+                dailyTotal = st.getInstagramMinutes() + st.getYoutubeMinutes() + st.getKakaotalkMinutes() + st.getChromeMinutes();
+                status = (dailyTotal > goalMinutes) ? "OVER" : "UNDER";
                 totalInsta += st.getInstagramMinutes();
                 totalYoutube += st.getYoutubeMinutes();
                 totalKakaotalk += st.getKakaotalkMinutes();
                 totalChrome += st.getChromeMinutes();
-
-                dailyRecords.add(ScreenTimeGetWeeklyResponse.DailyRecord.builder()
-                        .date(d)
-                        .totalMinutes(st.getInstagramMinutes() + st.getYoutubeMinutes() + st.getKakaotalkMinutes() + st.getChromeMinutes())
-                        .appTimes(ScreenTimeGetWeeklyResponse.AppTimeDetails.builder()
-                                .instagram(st.getInstagramMinutes())
-                                .youtube(st.getYoutubeMinutes())
-                                .kakaotalk(st.getKakaotalkMinutes())
-                                .chrome(st.getChromeMinutes())
-                                .build())
-                        .build());
+                appTimes = ScreenTimeGetWeeklyResponse.AppTimeDetails.builder()
+                        .instagram(st.getInstagramMinutes())
+                        .youtube(st.getYoutubeMinutes())
+                        .kakaotalk(st.getKakaotalkMinutes())
+                        .chrome(st.getChromeMinutes())
+                        .build();
             } else {
-                dailyRecords.add(ScreenTimeGetWeeklyResponse.DailyRecord.builder()
-                        .date(d)
-                        .totalMinutes(0)
-                        .appTimes(ScreenTimeGetWeeklyResponse.AppTimeDetails.builder().instagram(0).youtube(0).kakaotalk(0).chrome(0).build())
-                        .build());
+                appTimes = ScreenTimeGetWeeklyResponse.AppTimeDetails.builder()
+                        .instagram(0).youtube(0).kakaotalk(0).chrome(0).build();
             }
+
+            dailyRecords.add(ScreenTimeGetWeeklyResponse.DailyRecord.builder()
+                    .date(d)
+                    .dayOfWeek(d.getDayOfWeek().name())
+                    .totalMinutes(dailyTotal)
+                    .status(status)
+                    .appTimes(appTimes)
+                    .build());
         }
 
         int totalMinutes = totalInsta + totalYoutube + totalKakaotalk + totalChrome;
