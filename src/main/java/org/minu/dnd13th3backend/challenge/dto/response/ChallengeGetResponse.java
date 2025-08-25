@@ -33,6 +33,8 @@ public class ChallengeGetResponse {
         private Long userId;
         private String nickname;
 
+        private Integer characterIndex;
+
         @JsonProperty("current_time_minutes")
         private long currentTimeMinutes;
 
