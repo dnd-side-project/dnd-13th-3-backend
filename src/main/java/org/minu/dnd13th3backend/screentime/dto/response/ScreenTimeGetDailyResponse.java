@@ -11,26 +11,44 @@ import java.util.List;
 public class ScreenTimeGetDailyResponse {
     private List<DailyScreenTime> screenTimes;
 
-    public static ScreenTimeGetDailyResponse from(ScreenTime screenTime) {
+    public static ScreenTimeGetDailyResponse from(ScreenTime screenTime, String status) {
         if (screenTime == null) {
-            return ScreenTimeGetDailyResponse.builder().screenTimes(List.of()).build();
+            return ScreenTimeGetDailyResponse.builder()
+                    .screenTimes(List.of(DailyScreenTime.empty(LocalDate.now(), "NO_DATA")))
+                    .build();
         }
         return ScreenTimeGetDailyResponse.builder()
-                .screenTimes(List.of(new DailyScreenTime(screenTime)))
+                .screenTimes(List.of(new DailyScreenTime(screenTime, status)))
                 .build();
     }
 
     @Getter
     public static class DailyScreenTime {
         private LocalDate date;
+        private String dayOfWeek;
         private int totalMinutes;
+        private String status;
         private AppTimeDetails appTimes;
 
-        public DailyScreenTime(ScreenTime screenTime) {
+        public DailyScreenTime(ScreenTime screenTime, String status) {
             this.date = screenTime.getDate();
+            this.dayOfWeek = screenTime.getDate().getDayOfWeek().name(); // MONDAY, TUESDAY ...
             this.totalMinutes = screenTime.getInstagramMinutes() + screenTime.getYoutubeMinutes() +
                     screenTime.getKakaotalkMinutes() + screenTime.getChromeMinutes();
+            this.status = status;
             this.appTimes = new AppTimeDetails(screenTime);
+        }
+
+        public static DailyScreenTime empty(LocalDate date, String status) {
+            return new DailyScreenTime(date, status);
+        }
+
+        private DailyScreenTime(LocalDate date, String status) {
+            this.date = date;
+            this.dayOfWeek = date.getDayOfWeek().name();
+            this.totalMinutes = 0;
+            this.status = status;
+            this.appTimes = new AppTimeDetails(null);
         }
     }
 
