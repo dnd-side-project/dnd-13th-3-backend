@@ -13,8 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,41 +32,30 @@ public class ScreenTimeService {
         LocalDate today = LocalDate.now();
         Optional<ScreenTime> optionalScreenTime = screenTimeRepository.findByUser_IdAndDate(user.getId(), today);
 
-        int prevInsta = optionalScreenTime.map(ScreenTime::getInstagramMinutes).orElse(0);
-        int prevYoutube = optionalScreenTime.map(ScreenTime::getYoutubeMinutes).orElse(0);
-        int prevKakaotalk = optionalScreenTime.map(ScreenTime::getKakaotalkMinutes).orElse(0);
-        int prevChrome = optionalScreenTime.map(ScreenTime::getChromeMinutes).orElse(0);
-        int currentTotalMinutes = prevInsta + prevYoutube + prevKakaotalk + prevChrome;
-
-        Profile profile = profileRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalStateException("해당 사용자의 프로필을 찾을 수 없습니다: " + user.getId()));
-        int goalMinutes = getGoalMinutes(profile);
-        int maxMinutesForNow = calculateCurrentMaxMinutes(goalMinutes);
-
-        int remainingBudget = maxMinutesForNow - currentTotalMinutes;
-
         ScreenTime screenTime;
+
         if (optionalScreenTime.isPresent()) {
             screenTime = optionalScreenTime.get();
-            if (remainingBudget > 0) {
-                int totalIncrease = random.nextInt(Math.min(remainingBudget, 30)) + 1;
 
-                int[] increases = distributeTotalTime(totalIncrease, 4);
+            LocalDateTime lastUpdate = screenTime.getUpdatedAt() != null ? screenTime.getUpdatedAt() : screenTime.getCreatedAt();
+            if (lastUpdate == null) {
+                lastUpdate = LocalDateTime.now().minusMinutes(5);
+            }
 
+            long minutesPassed = Duration.between(lastUpdate, LocalDateTime.now()).toMinutes();
+
+            if (minutesPassed > 0) {
                 screenTime.updateScreenTime(
-                        prevInsta + increases[0],
-                        prevYoutube + increases[1],
-                        prevKakaotalk + increases[2],
-                        prevChrome + increases[3]
+                        screenTime.getInstagramMinutes() + (int) minutesPassed,
+                        screenTime.getYoutubeMinutes() + (int) minutesPassed,
+                        screenTime.getKakaotalkMinutes() + (int) minutesPassed,
+                        screenTime.getChromeMinutes() + (int) minutesPassed
                 );
             }
         } else {
-            int initialTotalMinutes = 0;
-            if (maxMinutesForNow > 0) {
-                initialTotalMinutes = random.nextInt(Math.min(maxMinutesForNow, 30)) + 1;
-            }
-
+            int initialTotalMinutes = random.nextInt(10) + 1;
             int[] appMinutes = distributeTotalTime(initialTotalMinutes, 4);
+
             screenTime = ScreenTime.builder()
                     .user(user)
                     .date(today)
@@ -109,12 +99,6 @@ public class ScreenTimeService {
         return profile.getScreenTimeGoalType().getMinutes();
     }
 
-    private int calculateCurrentMaxMinutes(int goalMinutes) {
-        double dayProgressRatio = (double) LocalTime.now().toSecondOfDay() / (24.0 * 3600.0);
-        int maxMinutes = (int) (goalMinutes * dayProgressRatio);
-        return Math.min(maxMinutes, goalMinutes);
-    }
-
     @Transactional(readOnly = true)
     public Object getScreenTime(String period, LocalDate date, User user) {
         if ("day".equalsIgnoreCase(period)) {
@@ -130,8 +114,13 @@ public class ScreenTimeService {
         LocalDate targetDate = (date == null) ? LocalDate.now() : date;
         ScreenTime screenTime = screenTimeRepository.findByUser_IdAndDate(user.getId(), targetDate).orElse(null);
 
-        Profile profile = profileRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalStateException("해당 사용자의 프로필을 찾을 수 없습니다: " + user.getId()));
+        Optional<Profile> optionalProfile = profileRepository.findByUserId(user.getId());
+
+        if (optionalProfile.isEmpty()) {
+            return ScreenTimeGetDailyResponse.from(screenTime, "NO_DATA");
+        }
+
+        Profile profile = optionalProfile.get();
         int goalMinutes = getGoalMinutes(profile);
 
         String status = "NO_DATA";
@@ -148,9 +137,9 @@ public class ScreenTimeService {
         LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
         LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
 
-        Profile profile = profileRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalStateException("해당 사용자의 프로필을 찾을 수 없습니다: " + user.getId()));
-        int goalMinutes = getGoalMinutes(profile);
+        Optional<Profile> optionalProfile = profileRepository.findByUserId(user.getId());
+
+        int goalMinutes = optionalProfile.map(this::getGoalMinutes).orElse(0);
 
         List<ScreenTime> recordedTimes = screenTimeRepository.findByUser_IdAndDateBetween(user.getId(), startOfWeek, endOfWeek);
         Map<LocalDate, ScreenTime> recordedMap = recordedTimes.stream().collect(Collectors.toMap(ScreenTime::getDate, st -> st));
@@ -167,7 +156,9 @@ public class ScreenTimeService {
 
             if (st != null) {
                 dailyTotal = st.getInstagramMinutes() + st.getYoutubeMinutes() + st.getKakaotalkMinutes() + st.getChromeMinutes();
-                status = (dailyTotal > goalMinutes) ? "OVER" : "UNDER";
+                if (optionalProfile.isPresent()) {
+                    status = (dailyTotal > goalMinutes) ? "OVER" : "UNDER";
+                }
                 totalInsta += st.getInstagramMinutes();
                 totalYoutube += st.getYoutubeMinutes();
                 totalKakaotalk += st.getKakaotalkMinutes();
