@@ -12,10 +12,7 @@ import org.minu.dnd13th3backend.user.type.ScreenTimeGoalType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,7 +50,17 @@ public class ScreenTimeService {
                 );
             }
         } else {
-            int initialTotalMinutes = random.nextInt(10) + 1;
+            Profile profile = profileRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new IllegalStateException("해당 사용자의 프로필을 찾을 수 없습니다: " + user.getId()));
+
+            int goalMinutes = getGoalMinutes(profile);
+            int maxMinutesForNow = calculateCurrentMaxMinutes(goalMinutes);
+
+            int initialTotalMinutes = 0;
+            if (maxMinutesForNow > 0) {
+                initialTotalMinutes = random.nextInt(maxMinutesForNow) + 1;
+            }
+
             int[] appMinutes = distributeTotalTime(initialTotalMinutes, 4);
 
             screenTime = ScreenTime.builder()
@@ -67,6 +74,7 @@ public class ScreenTimeService {
         }
         return screenTimeRepository.save(screenTime);
     }
+
 
     private int[] distributeTotalTime(int total, int parts) {
         int[] result = new int[parts];
@@ -108,6 +116,12 @@ public class ScreenTimeService {
         } else {
             throw new IllegalArgumentException("Invalid period value. It must be 'day' or 'week'.");
         }
+    }
+
+    private int calculateCurrentMaxMinutes(int goalMinutes) {
+        double dayProgressRatio = (double) LocalTime.now().toSecondOfDay() / (24.0 * 3600.0);
+        int maxMinutes = (int) (goalMinutes * dayProgressRatio);
+        return Math.min(maxMinutes, goalMinutes);
     }
 
     private ScreenTimeGetDailyResponse getDailyScreenTime(LocalDate date, User user) {
