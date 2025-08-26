@@ -17,9 +17,7 @@ public interface ChallengeParticipantRepository extends JpaRepository<ChallengeP
             User user, LocalDate today1, LocalDate today2
     );
 
-    List<ChallengeParticipant> findByUserAndChallenge_StartDateAndChallenge_EndDateOrderByChallenge_CreatedAtDesc(
-            User user, LocalDate startDate, LocalDate endDate
-    );
+    List<ChallengeParticipant> findByUserAndChallenge_EndDateBeforeOrderByChallenge_StartDateDesc(User user, LocalDate today);
 
     List<ChallengeParticipant> findByChallenge_Id(Long challengeId);
 
