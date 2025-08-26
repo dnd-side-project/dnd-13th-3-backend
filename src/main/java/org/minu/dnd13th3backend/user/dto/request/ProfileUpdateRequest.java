@@ -30,11 +30,15 @@ public class ProfileUpdateRequest {
     public static class Goal {
         @NotNull(message = "목표 타입은 필수입니다")
         @Schema(description = "목표 타입", example = "CUSTOM")
-        private GoalType type;
+        private String type;
 
         @Size(max = 100, message = "커스텀 목표는 100자 이하여야 합니다")
         @Schema(description = "커스텀 목표 (type이 CUSTOM일 때 필수)", example = "디지털 디톡스 챌린지 성공하기", maxLength = 100)
         private String custom;
+
+        public GoalType getGoalType() {
+            return GoalType.fromString(type);
+        }
     }
 
     @Getter
@@ -51,7 +55,7 @@ public class ProfileUpdateRequest {
     }
 
     public GoalType getGoalType() {
-        return goal.getType();
+        return goal.getGoalType();
     }
 
     public String getGoalCustom() {
