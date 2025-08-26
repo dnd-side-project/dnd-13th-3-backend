@@ -62,81 +62,94 @@ public class ChallengeService {
     }
 
     @Transactional(readOnly = true)
-    public ChallengeListResponse getChallenges(LocalDate startDate, LocalDate endDate, User user) {
-
-        List<ChallengeParticipant> userParticipations;
-        if (startDate != null && endDate != null) {
-            userParticipations = participantRepository.findByUserAndChallenge_StartDateAndChallenge_EndDateOrderByChallenge_CreatedAtDesc(user, startDate, endDate);
-        } else {
-            LocalDate today = LocalDate.now();
-            userParticipations = participantRepository.findByUserAndChallenge_StartDateLessThanEqualAndChallenge_EndDateGreaterThanEqualOrderByChallenge_CreatedAtDesc(user, today, today);
-        }
+    public ChallengeListResponse getChallenges(User user) {
+        LocalDate today = LocalDate.now();
+        List<ChallengeParticipant> userParticipations = participantRepository.findByUserAndChallenge_StartDateLessThanEqualAndChallenge_EndDateGreaterThanEqualOrderByChallenge_CreatedAtDesc(user, today, today);
 
         if (userParticipations.isEmpty()) {
             return ChallengeListResponse.builder().challenges(List.of()).build();
         }
 
         List<ChallengeGetResponse> challengeResponses = userParticipations.stream()
-                .map(participation -> {
-                    Challenge challenge = participation.getChallenge();
-                    List<ChallengeParticipant> allParticipants = participantRepository.findByChallenge_Id(challenge.getId());
-
-                    List<ChallengeGetResponse.ParticipantRecord> participantRecords = allParticipants.stream()
-                            .map(participant -> {
-                                User participantUser = participant.getUser();
-                                List<ScreenTime> screenTimes = screenTimeRepository.findByUser_IdAndDateBetween(
-                                        participantUser.getId(), challenge.getStartDate(), challenge.getEndDate()
-                                );
-
-                                long totalInsta = screenTimes.stream().mapToLong(ScreenTime::getInstagramMinutes).sum();
-                                long totalYoutube = screenTimes.stream().mapToLong(ScreenTime::getYoutubeMinutes).sum();
-                                long totalKakaotalk = screenTimes.stream().mapToLong(ScreenTime::getKakaotalkMinutes).sum();
-                                long totalChrome = screenTimes.stream().mapToLong(ScreenTime::getChromeMinutes).sum();
-                                long currentTimeMinutes = totalInsta + totalYoutube + totalKakaotalk + totalChrome;
-
-                                double achievementRate;
-                                if (challenge.getGoalTimeMinutes() > 0) {
-                                    double usageRate = ((double) currentTimeMinutes / challenge.getGoalTimeMinutes()) * 100.0;
-                                    achievementRate = Math.max(0, 100.0 - usageRate);
-                                } else {
-                                    achievementRate = (currentTimeMinutes == 0) ? 100.0 : 0.0;
-                                }
-
-                                String status;
-                                if (LocalDate.now().isAfter(challenge.getEndDate())) {
-                                    status = (currentTimeMinutes <= challenge.getGoalTimeMinutes()) ? "달성" : "실패";
-                                } else {
-                                    status = "진행 중";
-                                }
-
-                                return ChallengeGetResponse.ParticipantRecord.builder()
-                                        .userId(participantUser.getId())
-                                        .nickname(participantUser.getProfile().getNickname())
-                                        .characterIndex(participantUser.getProfile().getCharacterIndex())
-                                        .currentTimeMinutes(currentTimeMinutes)
-                                        .instagramMinutes(totalInsta)
-                                        .youtubeMinutes(totalYoutube)
-                                        .kakaotalkMinutes(totalKakaotalk)
-                                        .chromeMinutes(totalChrome)
-                                        .achievementRate(achievementRate)
-                                        .status(status)
-                                        .build();
-                            })
-                            .collect(Collectors.toList());
-
-                    return ChallengeGetResponse.builder()
-                            .challengeId(challenge.getId())
-                            .startDate(challenge.getStartDate())
-                            .endDate(challenge.getEndDate())
-                            .title(challenge.getTitle())
-                            .goalTimeMinutes(challenge.getGoalTimeMinutes())
-                            .participants(participantRecords)
-                            .build();
-                })
+                .map(this::mapParticipationToChallengeGetResponse)
                 .collect(Collectors.toList());
 
         return ChallengeListResponse.builder().challenges(challengeResponses).build();
     }
+
+    @Transactional(readOnly = true)
+    public ChallengeListResponse getChallengeHistory(User user) {
+        LocalDate today = LocalDate.now();
+        List<ChallengeParticipant> userParticipations = participantRepository.findByUserAndChallenge_EndDateBeforeOrderByChallenge_StartDateDesc(user, today);
+
+        if (userParticipations.isEmpty()) {
+            return ChallengeListResponse.builder().challenges(List.of()).build();
+        }
+
+        List<ChallengeGetResponse> challengeResponses = userParticipations.stream()
+                .map(this::mapParticipationToChallengeGetResponse)
+                .collect(Collectors.toList());
+
+        return ChallengeListResponse.builder().challenges(challengeResponses).build();
+    }
+
+    private ChallengeGetResponse mapParticipationToChallengeGetResponse(ChallengeParticipant participation) {
+        Challenge challenge = participation.getChallenge();
+        List<ChallengeParticipant> allParticipants = participantRepository.findByChallenge_Id(challenge.getId());
+
+        List<ChallengeGetResponse.ParticipantRecord> participantRecords = allParticipants.stream()
+                .map(participant -> {
+                    User participantUser = participant.getUser();
+                    List<ScreenTime> screenTimes = screenTimeRepository.findByUser_IdAndDateBetween(
+                            participantUser.getId(), challenge.getStartDate(), challenge.getEndDate()
+                    );
+
+                    long totalInsta = screenTimes.stream().mapToLong(ScreenTime::getInstagramMinutes).sum();
+                    long totalYoutube = screenTimes.stream().mapToLong(ScreenTime::getYoutubeMinutes).sum();
+                    long totalKakaotalk = screenTimes.stream().mapToLong(ScreenTime::getKakaotalkMinutes).sum();
+                    long totalChrome = screenTimes.stream().mapToLong(ScreenTime::getChromeMinutes).sum();
+                    long currentTimeMinutes = totalInsta + totalYoutube + totalKakaotalk + totalChrome;
+
+                    double achievementRate;
+                    if (challenge.getGoalTimeMinutes() > 0) {
+                        double usageRate = ((double) currentTimeMinutes / challenge.getGoalTimeMinutes()) * 100.0;
+                        achievementRate = Math.max(0, 100.0 - usageRate);
+                    } else {
+                        achievementRate = (currentTimeMinutes == 0) ? 100.0 : 0.0;
+                    }
+
+                    String status;
+                    if (LocalDate.now().isAfter(challenge.getEndDate())) {
+                        status = (currentTimeMinutes <= challenge.getGoalTimeMinutes()) ? "달성" : "실패";
+                    } else {
+                        status = "진행 중";
+                    }
+
+                    return ChallengeGetResponse.ParticipantRecord.builder()
+                            .userId(participantUser.getId())
+                            .nickname(participantUser.getProfile().getNickname())
+                            .characterIndex(participantUser.getProfile().getCharacterIndex())
+                            .currentTimeMinutes(currentTimeMinutes)
+                            .instagramMinutes(totalInsta)
+                            .youtubeMinutes(totalYoutube)
+                            .kakaotalkMinutes(totalKakaotalk)
+                            .chromeMinutes(totalChrome)
+                            .achievementRate(achievementRate)
+                            .status(status)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return ChallengeGetResponse.builder()
+                .challengeId(challenge.getId())
+                .startDate(challenge.getStartDate())
+                .endDate(challenge.getEndDate())
+                .title(challenge.getTitle())
+                .goalTimeMinutes(challenge.getGoalTimeMinutes())
+                .participants(participantRecords)
+                .build();
+    }
+
 
     @Transactional
     public String generateInviteLink(Long challengeId, User user) {
