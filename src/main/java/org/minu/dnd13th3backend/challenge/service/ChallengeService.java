@@ -100,6 +100,11 @@ public class ChallengeService {
         List<ChallengeGetResponse.ParticipantRecord> participantRecords = allParticipants.stream()
                 .map(participant -> {
                     User participantUser = participant.getUser();
+
+                    if (participantUser.getProfile() == null) {
+                        throw new BusinessException(ErrorCode.PARTICIPANT_PROFILE_NOT_FOUND);
+                    }
+
                     List<ScreenTime> screenTimes = screenTimeRepository.findByUser_IdAndDateBetween(
                             participantUser.getId(), challenge.getStartDate(), challenge.getEndDate()
                     );
@@ -150,7 +155,6 @@ public class ChallengeService {
                 .build();
     }
 
-
     @Transactional
     public String generateInviteLink(Long challengeId, User user) {
         Challenge challenge = challengeRepository.findById(challengeId)
@@ -180,6 +184,10 @@ public class ChallengeService {
 
         if (LocalDate.now().isAfter(inviteCode.getExpiresAt())) {
             throw new BusinessException(ErrorCode.INVITE_CODE_EXPIRED);
+        }
+
+        if (user.getProfile() == null) {
+            throw new BusinessException(ErrorCode.PROFILE_NOT_FOUND);
         }
 
         Challenge challenge = inviteCode.getChallenge();

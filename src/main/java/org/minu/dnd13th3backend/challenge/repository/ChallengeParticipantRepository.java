@@ -14,7 +14,7 @@ import java.util.List;
 @Repository
 public interface ChallengeParticipantRepository extends JpaRepository<ChallengeParticipant, Long> {
 
-    @Query("SELECT cp FROM ChallengeParticipant cp JOIN FETCH cp.user u JOIN FETCH u.profile " +
+    @Query("SELECT cp FROM ChallengeParticipant cp JOIN FETCH cp.user u LEFT JOIN FETCH u.profile " +
             "WHERE cp.user = :user " +
             "AND cp.challenge.startDate <= :today1 " +
             "AND cp.challenge.endDate >= :today2 " +
@@ -23,13 +23,13 @@ public interface ChallengeParticipantRepository extends JpaRepository<ChallengeP
             @Param("user") User user, @Param("today1") LocalDate today1, @Param("today2") LocalDate today2
     );
 
-    @Query("SELECT cp FROM ChallengeParticipant cp JOIN FETCH cp.user u JOIN FETCH u.profile " +
+    @Query("SELECT cp FROM ChallengeParticipant cp JOIN FETCH cp.user u LEFT JOIN FETCH u.profile " +
             "WHERE cp.user = :user " +
             "AND cp.challenge.endDate < :today " +
             "ORDER BY cp.challenge.startDate DESC")
     List<ChallengeParticipant> findByUserAndChallenge_EndDateBeforeOrderByChallenge_StartDateDesc(@Param("user") User user, @Param("today") LocalDate today);
 
-    @Query("SELECT cp FROM ChallengeParticipant cp JOIN FETCH cp.user u JOIN FETCH u.profile WHERE cp.challenge.id = :challengeId")
+    @Query("SELECT cp FROM ChallengeParticipant cp JOIN FETCH cp.user u LEFT JOIN FETCH u.profile WHERE cp.challenge.id = :challengeId")
     List<ChallengeParticipant> findByChallenge_Id(@Param("challengeId") Long challengeId);
 
     boolean existsByChallengeAndUser(Challenge challenge, User user);
