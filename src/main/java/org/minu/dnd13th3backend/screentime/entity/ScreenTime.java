@@ -8,15 +8,13 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.minu.dnd13th3backend.user.entity.User;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
 public class ScreenTime {
 
     @Id
@@ -35,10 +33,12 @@ public class ScreenTime {
     private int chromeMinutes;
 
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    @Column(columnDefinition = "TIMESTAMP")
+    private Instant createdAt;
 
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    @Column(columnDefinition = "TIMESTAMP")
+    private Instant updatedAt;
 
     @Builder
     public ScreenTime(User user, LocalDate date, int instagramMinutes, int youtubeMinutes, int kakaotalkMinutes, int chromeMinutes) {
