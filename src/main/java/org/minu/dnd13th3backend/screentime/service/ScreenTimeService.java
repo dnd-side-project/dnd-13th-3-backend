@@ -23,23 +23,25 @@ public class ScreenTimeService {
     private final ScreenTimeRepository screenTimeRepository;
     private final ProfileRepository profileRepository;
     private final Random random = new Random();
+    private final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Transactional
     public ScreenTime generateAndSaveScreenTime(User user) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(KST);
         Optional<ScreenTime> optionalScreenTime = screenTimeRepository.findByUser_IdAndDate(user.getId(), today);
 
         ScreenTime screenTime;
 
         if (optionalScreenTime.isPresent()) {
             screenTime = optionalScreenTime.get();
+            LocalDateTime now = LocalDateTime.now(KST);
 
             LocalDateTime lastUpdate = screenTime.getUpdatedAt() != null ? screenTime.getUpdatedAt() : screenTime.getCreatedAt();
             if (lastUpdate == null) {
-                lastUpdate = LocalDateTime.now().minusMinutes(5);
+                lastUpdate = now.minusMinutes(5);
             }
 
-            long minutesPassed = Duration.between(lastUpdate, LocalDateTime.now()).toMinutes();
+            long minutesPassed = Duration.between(lastUpdate, now).toMinutes();
 
             if (minutesPassed > 0) {
                 screenTime.updateScreenTime(
@@ -58,7 +60,12 @@ public class ScreenTimeService {
 
             int initialTotalMinutes = 0;
             if (maxMinutesForNow > 0) {
-                initialTotalMinutes = random.nextInt(maxMinutesForNow) + 1;
+                if (maxMinutesForNow > 1) {
+                    int minMinutes = maxMinutesForNow / 2;
+                    initialTotalMinutes = random.nextInt(maxMinutesForNow - minMinutes + 1) + minMinutes;
+                } else {
+                    initialTotalMinutes = maxMinutesForNow;
+                }
             }
 
             int[] appMinutes = distributeTotalTime(initialTotalMinutes, 4);
@@ -119,13 +126,14 @@ public class ScreenTimeService {
     }
 
     private int calculateCurrentMaxMinutes(int goalMinutes) {
-        double dayProgressRatio = (double) LocalTime.now().toSecondOfDay() / (24.0 * 3600.0);
+        LocalTime now = LocalTime.now(KST);
+        double dayProgressRatio = (double) now.toSecondOfDay() / (24.0 * 3600.0);
         int maxMinutes = (int) (goalMinutes * dayProgressRatio);
         return Math.min(maxMinutes, goalMinutes);
     }
 
     private ScreenTimeGetDailyResponse getDailyScreenTime(LocalDate date, User user) {
-        LocalDate targetDate = (date == null) ? LocalDate.now() : date;
+        LocalDate targetDate = (date == null) ? LocalDate.now(KST) : date;
         ScreenTime screenTime = screenTimeRepository.findByUser_IdAndDate(user.getId(), targetDate).orElse(null);
 
         Optional<Profile> optionalProfile = profileRepository.findByUserId(user.getId());
@@ -147,7 +155,7 @@ public class ScreenTimeService {
     }
 
     private ScreenTimeGetWeeklyResponse getWeeklyScreenTime(LocalDate date, User user) {
-        LocalDate today = (date == null) ? LocalDate.now() : date;
+        LocalDate today = (date == null) ? LocalDate.now(KST) : date;
         LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
         LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
 
