@@ -24,9 +24,11 @@ public class ChallengeGetResponse {
     @JsonProperty("goal_time_minutes")
     private int goalTimeMinutes;
 
+    @JsonProperty("invite_url")
+    private String inviteUrl;
+
     private List<ParticipantRecord> participants;
 
-    // 참가자 한 명의 정보를 담는 내부 클래스
     @Getter
     @Builder
     public static class ParticipantRecord {
