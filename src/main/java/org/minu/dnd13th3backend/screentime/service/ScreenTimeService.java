@@ -34,14 +34,16 @@ public class ScreenTimeService {
 
         if (optionalScreenTime.isPresent()) {
             screenTime = optionalScreenTime.get();
-            LocalDateTime now = LocalDateTime.now(KST);
 
-            LocalDateTime lastUpdate = screenTime.getUpdatedAt() != null ? screenTime.getUpdatedAt() : screenTime.getCreatedAt();
-            if (lastUpdate == null) {
-                lastUpdate = now.minusMinutes(5);
+            LocalDateTime nowInKst = LocalDateTime.now(KST);
+
+            LocalDateTime lastUpdateFromDb = screenTime.getUpdatedAt() != null ? screenTime.getUpdatedAt() : screenTime.getCreatedAt();
+
+            if (lastUpdateFromDb == null) {
+                lastUpdateFromDb = nowInKst.minusMinutes(5);
             }
 
-            long minutesPassed = Duration.between(lastUpdate, now).toMinutes();
+            long minutesPassed = Duration.between(lastUpdateFromDb, nowInKst).toMinutes();
 
             if (minutesPassed > 0) {
                 screenTime.updateScreenTime(
