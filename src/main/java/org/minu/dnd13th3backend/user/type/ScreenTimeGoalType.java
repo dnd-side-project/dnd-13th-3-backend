@@ -35,13 +35,13 @@ public enum ScreenTimeGoalType {
         }
 
         switch (value) {
-            case "2HOURS":
+            case "120":
                 return TWO_HOURS;
-            case "4HOURS":
+            case "240":
                 return FOUR_HOURS;
-            case "6HOURS":
+            case "360":
                 return SIX_HOURS;
-            case "8HOURS":
+            case "480":
                 return EIGHT_HOURS;
             case "12HOURS":
                 return TWELVE_HOURS;

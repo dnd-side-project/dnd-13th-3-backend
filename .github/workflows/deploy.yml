@@ -78,6 +78,8 @@ jobs:
                   - "3306:3306"
                 env_file:
                   - ./.env
+                environment:
+                  - TZ=Asia/Seoul
                 volumes:
                   - db_data:/var/lib/mysql
                 healthcheck:
@@ -108,7 +110,7 @@ jobs:
             EOF
             
             cat <<'EOF' > .env
-            DB_URL="jdbc:mysql://db:3306/${{ secrets.DB_NAME }}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true"
+            DB_URL="${{ secrets.DB_URL }}"
             DB_USERNAME="${{ secrets.DB_USERNAME }}"
             DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
             

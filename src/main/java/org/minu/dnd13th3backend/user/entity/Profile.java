@@ -40,24 +40,30 @@ public class Profile {
     @Column(name = "screen_time_goal_custom", length = 100)
     private String screenTimeGoalCustom;
 
+    @Column(name = "character_index")
+    private Integer characterIndex;
 
     @Builder
     private Profile(User user, String nickname, GoalType goalType, String goalCustom,
-                   ScreenTimeGoalType screenTimeGoalType, String screenTimeGoalCustom) {
+                   ScreenTimeGoalType screenTimeGoalType, String screenTimeGoalCustom, 
+                   Integer characterIndex) {
         this.user = user;
         this.nickname = nickname;
         this.goalType = goalType;
         this.goalCustom = goalCustom;
         this.screenTimeGoalType = screenTimeGoalType;
         this.screenTimeGoalCustom = screenTimeGoalCustom;
+        this.characterIndex = characterIndex;
     }
 
     public void updateProfile(String nickname, GoalType goalType, String goalCustom,
-                             ScreenTimeGoalType screenTimeGoalType, String screenTimeGoalCustom) {
+                             ScreenTimeGoalType screenTimeGoalType, String screenTimeGoalCustom,
+                             Integer characterIndex) {
         this.nickname = nickname;
         this.goalType = goalType;
         this.goalCustom = goalCustom;
         this.screenTimeGoalType = screenTimeGoalType;
         this.screenTimeGoalCustom = screenTimeGoalCustom;
+        this.characterIndex = characterIndex;
     }
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.minu.dnd13th3backend.challenge.dto.request.ChallengeCreateRequest;
 import org.minu.dnd13th3backend.challenge.dto.request.InviteJoinRequest;
 import org.minu.dnd13th3backend.challenge.dto.response.ChallengeGetResponse;
+import org.minu.dnd13th3backend.challenge.dto.response.ChallengeListResponse;
 import org.minu.dnd13th3backend.challenge.entity.Challenge;
 import org.minu.dnd13th3backend.challenge.entity.ChallengeParticipant;
 import org.minu.dnd13th3backend.challenge.entity.InviteCode;
@@ -11,7 +12,6 @@ import org.minu.dnd13th3backend.challenge.repository.ChallengeParticipantReposit
 import org.minu.dnd13th3backend.challenge.repository.ChallengeRepository;
 import org.minu.dnd13th3backend.challenge.repository.InviteCodeRepository;
 import org.minu.dnd13th3backend.challenge.type.ChallengeStatus;
-import org.minu.dnd13th3backend.challenge.type.ChallengeType;
 import org.minu.dnd13th3backend.common.exception.BusinessException;
 import org.minu.dnd13th3backend.common.exception.ErrorCode;
 import org.minu.dnd13th3backend.screentime.entity.ScreenTime;
@@ -44,7 +44,6 @@ public class ChallengeService {
         Challenge challenge = Challenge.builder()
                 .creator(user)
                 .title(request.getTitle())
-                .type(request.getType())
                 .goalTimeMinutes(request.getGoalTimeMinutes())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
@@ -64,24 +63,54 @@ public class ChallengeService {
     }
 
     @Transactional(readOnly = true)
-    public ChallengeGetResponse getChallenge(ChallengeType type, LocalDate startDate, LocalDate endDate, User user) {
-        Optional<ChallengeParticipant> userParticipation;
-        if (startDate != null && endDate != null) {
-            userParticipation = participantRepository.findFirstByUserAndChallenge_TypeAndChallenge_StartDateAndChallenge_EndDateOrderByChallenge_CreatedAtDesc(user, type, startDate, endDate);
-        } else {
-            LocalDate today = LocalDate.now();
-            userParticipation = participantRepository.findFirstByUserAndChallenge_TypeAndChallenge_StartDateLessThanEqualAndChallenge_EndDateGreaterThanEqualOrderByChallenge_CreatedAtDesc(user, type, today, today);
+    public ChallengeListResponse getChallenges(User user) {
+        LocalDate today = LocalDate.now();
+        List<ChallengeParticipant> userParticipations = participantRepository.findByUserAndChallenge_StartDateLessThanEqualAndChallenge_EndDateGreaterThanEqualOrderByChallenge_CreatedAtDesc(user, today, today);
+
+        if (userParticipations.isEmpty()) {
+            return ChallengeListResponse.builder().challenges(List.of()).build();
         }
 
-        Challenge challenge = userParticipation
-                .map(ChallengeParticipant::getChallenge)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CHALLENGE_NOT_FOUND));
+        List<ChallengeGetResponse> challengeResponses = userParticipations.stream()
+                .map(this::mapParticipationToChallengeGetResponse)
+                .collect(Collectors.toList());
 
+        return ChallengeListResponse.builder().challenges(challengeResponses).build();
+    }
+
+    @Transactional(readOnly = true)
+    public ChallengeListResponse getChallengeHistory(User user) {
+        LocalDate today = LocalDate.now();
+        List<ChallengeParticipant> userParticipations = participantRepository.findByUserAndChallenge_EndDateBeforeOrderByChallenge_StartDateDesc(user, today);
+
+        if (userParticipations.isEmpty()) {
+            return ChallengeListResponse.builder().challenges(List.of()).build();
+        }
+
+        List<ChallengeGetResponse> challengeResponses = userParticipations.stream()
+                .map(this::mapParticipationToChallengeGetResponse)
+                .collect(Collectors.toList());
+
+        return ChallengeListResponse.builder().challenges(challengeResponses).build();
+    }
+
+    private ChallengeGetResponse mapParticipationToChallengeGetResponse(ChallengeParticipant participation) {
+        Challenge challenge = participation.getChallenge();
         List<ChallengeParticipant> allParticipants = participantRepository.findByChallenge_Id(challenge.getId());
+
+        Optional<InviteCode> optionalInviteCode = inviteCodeRepository.findByChallenge(challenge);
+
+        String inviteUrl = optionalInviteCode
+                .map(inviteCode -> frontendBaseUrl + "/join?code=" + inviteCode.getCode())
+                .orElse(null);
 
         List<ChallengeGetResponse.ParticipantRecord> participantRecords = allParticipants.stream()
                 .map(participant -> {
                     User participantUser = participant.getUser();
+
+                    if (participantUser.getProfile() == null) {
+                        throw new BusinessException(ErrorCode.PARTICIPANT_PROFILE_NOT_FOUND);
+                    }
 
                     List<ScreenTime> screenTimes = screenTimeRepository.findByUser_IdAndDateBetween(
                             participantUser.getId(), challenge.getStartDate(), challenge.getEndDate()
@@ -111,6 +140,7 @@ public class ChallengeService {
                     return ChallengeGetResponse.ParticipantRecord.builder()
                             .userId(participantUser.getId())
                             .nickname(participantUser.getProfile().getNickname())
+                            .characterIndex(participantUser.getProfile().getCharacterIndex())
                             .currentTimeMinutes(currentTimeMinutes)
                             .instagramMinutes(totalInsta)
                             .youtubeMinutes(totalYoutube)
@@ -124,19 +154,23 @@ public class ChallengeService {
 
         return ChallengeGetResponse.builder()
                 .challengeId(challenge.getId())
-                .type(challenge.getType())
                 .startDate(challenge.getStartDate())
                 .endDate(challenge.getEndDate())
                 .title(challenge.getTitle())
                 .goalTimeMinutes(challenge.getGoalTimeMinutes())
+                .inviteUrl(inviteUrl)
                 .participants(participantRecords)
                 .build();
     }
 
     @Transactional
-    public String generateInviteLink(User user) {
-        Challenge challenge = challengeRepository.findTopByCreatorAndTypeOrderByCreatedAtDesc(user, ChallengeType.SHARE)
+    public String generateInviteLink(Long challengeId, User user) {
+        Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHALLENGE_NOT_FOUND));
+
+        if (!challenge.getCreator().getId().equals(user.getId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
 
         InviteCode inviteCode = inviteCodeRepository.findByChallenge(challenge)
                 .orElseGet(() -> {
@@ -158,6 +192,10 @@ public class ChallengeService {
 
         if (LocalDate.now().isAfter(inviteCode.getExpiresAt())) {
             throw new BusinessException(ErrorCode.INVITE_CODE_EXPIRED);
+        }
+
+        if (user.getProfile() == null) {
+            throw new BusinessException(ErrorCode.PROFILE_NOT_FOUND);
         }
 
         Challenge challenge = inviteCode.getChallenge();

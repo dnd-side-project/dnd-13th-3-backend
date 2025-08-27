@@ -17,6 +17,8 @@ public enum ErrorCode {
     CHALLENGE_ALREADY_JOINED(HttpStatus.BAD_REQUEST, "이미 참여한 챌린지입니다."),
     CHALLENGE_FULL(HttpStatus.BAD_REQUEST, "챌린지 인원이 가득 찼습니다."),
     CANNOT_JOIN_OWN_CHALLENGE(HttpStatus.BAD_REQUEST, "본인이 생성한 챌린지에는 참여할 수 없습니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "해당 작업에 대한 권한이 없습니다."),
+    PARTICIPANT_PROFILE_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "참가자 중 프로필이 등록되지 않은 사용자가 있습니다."),
 
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),

@@ -5,8 +5,11 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.minu.dnd13th3backend.user.entity.User;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 @Entity
@@ -28,6 +31,14 @@ public class ScreenTime {
     private int youtubeMinutes;
     private int kakaotalkMinutes;
     private int chromeMinutes;
+
+    @CreationTimestamp
+    @Column(columnDefinition = "TIMESTAMP")
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(columnDefinition = "TIMESTAMP")
+    private Instant updatedAt;
 
     @Builder
     public ScreenTime(User user, LocalDate date, int instagramMinutes, int youtubeMinutes, int kakaotalkMinutes, int chromeMinutes) {

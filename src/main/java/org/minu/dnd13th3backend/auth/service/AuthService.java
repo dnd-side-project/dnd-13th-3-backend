@@ -4,15 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.minu.dnd13th3backend.auth.dto.TokenResponse;
 import org.minu.dnd13th3backend.common.exception.BusinessException;
 import org.minu.dnd13th3backend.user.entity.OauthInfo;
+import org.minu.dnd13th3backend.user.entity.Profile;
 import org.minu.dnd13th3backend.user.entity.User;
 import org.minu.dnd13th3backend.user.repository.OauthInfoRepository;
+import org.minu.dnd13th3backend.user.repository.ProfileRepository;
 import org.minu.dnd13th3backend.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -21,9 +21,9 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final OauthInfoRepository oauthInfoRepository;
+    private final ProfileRepository profileRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
-    private final Random random = new Random();
 
     public TokenResponse processOAuth2Login(OAuth2User oauth2User) {
         if (oauth2User == null) {
@@ -55,7 +55,13 @@ public class AuthService {
         
         refreshTokenService.storeRefreshToken(user.getId().toString(), refreshToken);
         
-        Integer characterIndex = generateRandomCharacterIndex();
+        Integer characterIndex = null;
+        if (!isNewUser) {
+            Profile profile = profileRepository.findById(user.getId()).orElse(null);
+            if (profile != null) {
+                characterIndex = profile.getCharacterIndex();
+            }
+        }
 
         return TokenResponse.of(accessToken, refreshToken, characterIndex, isNewUser);
     }
@@ -94,7 +100,11 @@ public class AuthService {
         
         refreshTokenService.storeRefreshToken(user.getId().toString(), newRefreshToken);
         
-        Integer characterIndex = generateRandomCharacterIndex();
+        Integer characterIndex = null;
+        Profile profile = profileRepository.findById(user.getId()).orElse(null);
+        if (profile != null) {
+            characterIndex = profile.getCharacterIndex();
+        }
 
         return TokenResponse.of(newAccessToken, newRefreshToken, characterIndex, false);
     }
@@ -104,9 +114,5 @@ public class AuthService {
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "유효하지 않은 액세스 토큰입니다.");
         }
         return jwtTokenProvider.getSubject(accessToken);
-    }
-    
-    private Integer generateRandomCharacterIndex() {
-        return random.nextInt(6) + 1;
     }
 }

@@ -29,7 +29,9 @@ public class ScreenTimeGetWeeklyResponse {
     @Builder
     public static class DailyRecord {
         private LocalDate date;
+        private String dayOfWeek;
         private int totalMinutes;
+        private String status;
         private AppTimeDetails appTimes;
     }
 }

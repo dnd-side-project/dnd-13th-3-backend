@@ -3,7 +3,6 @@ package org.minu.dnd13th3backend.challenge.dto.response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
-import org.minu.dnd13th3backend.challenge.type.ChallengeType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.List;
 public class ChallengeGetResponse {
 
     private Long challengeId;
-    private ChallengeType type;
 
     @JsonProperty("start_date")
     private LocalDate startDate;
@@ -26,14 +24,18 @@ public class ChallengeGetResponse {
     @JsonProperty("goal_time_minutes")
     private int goalTimeMinutes;
 
+    @JsonProperty("invite_url")
+    private String inviteUrl;
+
     private List<ParticipantRecord> participants;
 
-    // 참가자 한 명의 정보를 담는 내부 클래스
     @Getter
     @Builder
     public static class ParticipantRecord {
         private Long userId;
         private String nickname;
+
+        private Integer characterIndex;
 
         @JsonProperty("current_time_minutes")
         private long currentTimeMinutes;
