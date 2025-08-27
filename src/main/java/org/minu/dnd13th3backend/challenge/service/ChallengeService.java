@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -97,6 +98,12 @@ public class ChallengeService {
         Challenge challenge = participation.getChallenge();
         List<ChallengeParticipant> allParticipants = participantRepository.findByChallenge_Id(challenge.getId());
 
+        Optional<InviteCode> optionalInviteCode = inviteCodeRepository.findByChallenge(challenge);
+
+        String inviteUrl = optionalInviteCode
+                .map(inviteCode -> frontendBaseUrl + "/join?code=" + inviteCode.getCode())
+                .orElse(null);
+
         List<ChallengeGetResponse.ParticipantRecord> participantRecords = allParticipants.stream()
                 .map(participant -> {
                     User participantUser = participant.getUser();
@@ -151,6 +158,7 @@ public class ChallengeService {
                 .endDate(challenge.getEndDate())
                 .title(challenge.getTitle())
                 .goalTimeMinutes(challenge.getGoalTimeMinutes())
+                .inviteUrl(inviteUrl)
                 .participants(participantRecords)
                 .build();
     }
