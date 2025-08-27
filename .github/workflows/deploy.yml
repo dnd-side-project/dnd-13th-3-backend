@@ -78,13 +78,10 @@ jobs:
                   - "3306:3306"
                 env_file:
                   - ./.env
+                environment:
+                  - TZ=Asia/Seoul
                 volumes:
                   - db_data:/var/lib/mysql
-                command:
-                  - --default-authentication-plugin=mysql_native_password
-                  - --character-set-server=utf8mb4
-                  - --collation-server=utf8mb4_unicode_ci
-                  - --time-zone=Asia/Seoul
                 healthcheck:
                   test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
                   interval: 10s
