@@ -46,7 +46,7 @@ public class ProfileUpdateRequest {
     @Schema(description = "스크린 타임 목표 정보")
     public static class ScreenTimeGoal {
         @NotNull(message = "스크린 타임 목표 타입은 필수입니다")
-        @Schema(description = "스크린 타임 목표 타입", example = "2HOURS", allowableValues = {"2HOURS", "4HOURS", "6HOURS", "8HOURS", "CUSTOM"})
+        @Schema(description = "스크린 타임 목표 타입", example = "2HOURS", allowableValues = {"2HOURS", "4HOURS", "6HOURS", "8HOURS", "12HOURS", "CUSTOM"})
         private String type;
 
         @Size(max = 100, message = "커스텀 스크린 타임 목표는 100자 이하여야 합니다")
@@ -69,6 +69,7 @@ public class ProfileUpdateRequest {
             case "4HOURS": return ScreenTimeGoalType.FOUR_HOURS;
             case "6HOURS": return ScreenTimeGoalType.SIX_HOURS;
             case "8HOURS": return ScreenTimeGoalType.EIGHT_HOURS;
+            case "12HOURS": return ScreenTimeGoalType.TWELVE_HOURS;
             case "CUSTOM": return ScreenTimeGoalType.CUSTOM;
             default: throw new IllegalArgumentException("Invalid screen time goal type: " + type);
         }
