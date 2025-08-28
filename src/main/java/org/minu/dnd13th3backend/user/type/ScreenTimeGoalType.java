@@ -8,7 +8,6 @@ public enum ScreenTimeGoalType {
     FOUR_HOURS("4HOURS", 240),
     SIX_HOURS("6HOURS", 360),
     EIGHT_HOURS("8HOURS", 480),
-    TWELVE_HOURS("12HOURS", 720),
     CUSTOM("CUSTOM", 0);
 
     private final String value;
@@ -43,8 +42,6 @@ public enum ScreenTimeGoalType {
                 return SIX_HOURS;
             case "480":
                 return EIGHT_HOURS;
-            case "12HOURS":
-                return TWELVE_HOURS;
             case "custom":
                 return CUSTOM;
             default:
