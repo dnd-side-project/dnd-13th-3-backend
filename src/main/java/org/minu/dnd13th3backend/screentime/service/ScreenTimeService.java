@@ -45,11 +45,13 @@ public class ScreenTimeService {
             long minutesPassed = Duration.between(lastUpdate, now).toMinutes();
 
             if (minutesPassed > 0) {
+                int[] minutesToAdd = distributeTotalTime((int) minutesPassed, 4);
+
                 screenTime.updateScreenTime(
-                        screenTime.getInstagramMinutes() + (int) minutesPassed,
-                        screenTime.getYoutubeMinutes() + (int) minutesPassed,
-                        screenTime.getKakaotalkMinutes() + (int) minutesPassed,
-                        screenTime.getChromeMinutes() + (int) minutesPassed
+                        screenTime.getInstagramMinutes() + minutesToAdd[0],
+                        screenTime.getYoutubeMinutes() + minutesToAdd[1],
+                        screenTime.getKakaotalkMinutes() + minutesToAdd[2],
+                        screenTime.getChromeMinutes() + minutesToAdd[3]
                 );
             }
         } else {
@@ -107,18 +109,14 @@ public class ScreenTimeService {
     private int getGoalMinutes(Profile profile) {
         if (profile.getScreenTimeGoalType() == ScreenTimeGoalType.CUSTOM) {
             String customGoal = profile.getScreenTimeGoalCustom();
-
             if (customGoal == null || customGoal.trim().isEmpty()) {
                 return 240;
             }
-
             try {
                 String numericString = customGoal.replaceAll("[^\\d]", "");
-
                 if (numericString.isEmpty()) {
                     return 240;
                 }
-
                 return Integer.parseInt(numericString);
             } catch (NumberFormatException e) {
                 return 240;
