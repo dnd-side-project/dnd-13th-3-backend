@@ -22,11 +22,15 @@ public class InviteJoinResponse {
 
     private final String title;
 
+    @JsonProperty("goal_time_minutes")
+    private final int goalTimeMinutes;
+
     public InviteJoinResponse(Challenge challenge, String message) {
         this.message = message;
         this.challengeId = challenge.getId();
         this.startDate = challenge.getStartDate();
         this.endDate = challenge.getEndDate();
         this.title = challenge.getTitle();
+        this.goalTimeMinutes = challenge.getGoalTimeMinutes();
     }
 }
