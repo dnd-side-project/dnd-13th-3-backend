@@ -106,8 +106,20 @@ public class ScreenTimeService {
 
     private int getGoalMinutes(Profile profile) {
         if (profile.getScreenTimeGoalType() == ScreenTimeGoalType.CUSTOM) {
+            String customGoal = profile.getScreenTimeGoalCustom();
+
+            if (customGoal == null || customGoal.trim().isEmpty()) {
+                return 240;
+            }
+
             try {
-                return Integer.parseInt(profile.getScreenTimeGoalCustom());
+                String numericString = customGoal.replaceAll("[^\\d]", "");
+
+                if (numericString.isEmpty()) {
+                    return 240;
+                }
+
+                return Integer.parseInt(numericString);
             } catch (NumberFormatException e) {
                 return 240;
             }
