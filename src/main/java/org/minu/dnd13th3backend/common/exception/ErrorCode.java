@@ -24,6 +24,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
     
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "유효하지 않은 입력 값입니다."),
+    SCREEN_TIME_GOAL_CUSTOM_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "커스텀 스크린 타임 목표는 12시간(720분)을 초과할 수 없습니다."),
     
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
 

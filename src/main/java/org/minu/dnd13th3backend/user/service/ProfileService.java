@@ -10,6 +10,7 @@ import org.minu.dnd13th3backend.user.entity.Profile;
 import org.minu.dnd13th3backend.user.entity.User;
 import org.minu.dnd13th3backend.user.repository.ProfileRepository;
 import org.minu.dnd13th3backend.user.repository.UserRepository;
+import org.minu.dnd13th3backend.user.type.ScreenTimeGoalType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +42,7 @@ public class ProfileService {
         }
 
         Integer characterIndex = generateRandomCharacterIndex();
-        
+        validateScreenTimeGoalCustom(request.getScreenTimeGoalType(), request.getScreenTimeGoalCustom());
         Profile profile = Profile.builder()
                 .user(user)
                 .nickname(request.getNickname())
@@ -63,6 +64,7 @@ public class ProfileService {
 
         String nickname = request.getNickname() != null ? request.getNickname() : profile.getNickname();
         Integer characterIndex = request.getCharacterIndex() != null ? request.getCharacterIndex() : profile.getCharacterIndex();
+        validateScreenTimeGoalCustom(request.getScreenTimeGoalType(), request.getScreenTimeGoalCustom());
 
         profile.updateProfile(
                 nickname,
@@ -76,6 +78,19 @@ public class ProfileService {
     
     private Integer generateRandomCharacterIndex() {
         return random.nextInt(6) + 1;
+    }
+
+    private void validateScreenTimeGoalCustom(ScreenTimeGoalType type, String customValue) {
+        if (type == ScreenTimeGoalType.CUSTOM && customValue != null) {
+            try {
+                int customMinutes = Integer.parseInt(customValue);
+                if (customMinutes > 720) {
+                    throw new BusinessException(ErrorCode.SCREEN_TIME_GOAL_CUSTOM_LIMIT_EXCEEDED);
+                }
+            } catch (NumberFormatException e) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+        }
     }
 
 }
