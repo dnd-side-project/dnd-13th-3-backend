@@ -27,7 +27,7 @@ public enum GoalType {
                 return HEALTH_CARE;
             case "혼자 있는 시간 디지털 없이 보내보기":
                 return NO_SCREEN;
-            case "custom":
+            case "CUSTOM":
                 return CUSTOM;
             default:
                 if (value.equals(value.toUpperCase())) {
