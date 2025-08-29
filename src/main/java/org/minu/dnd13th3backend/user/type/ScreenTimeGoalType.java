@@ -42,7 +42,7 @@ public enum ScreenTimeGoalType {
                 return SIX_HOURS;
             case "480":
                 return EIGHT_HOURS;
-            case "custom":
+            case "CUSTOM":
                 return CUSTOM;
             default:
                 if (value.equals(value.toUpperCase())) {
