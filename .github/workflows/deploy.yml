@@ -60,7 +60,7 @@ jobs:
                 env_file:
                   - ./.env
                 environment:
-                  - PROFILE=prod
+                  - SPRING_PROFILES_ACTIVE=prod
                   - SPRING_DATA_REDIS_HOST=redis
                 depends_on:
                   db:
