@@ -62,6 +62,7 @@ jobs:
                 environment:
                   - SPRING_PROFILES_ACTIVE=prod
                   - SPRING_DATA_REDIS_HOST=redis
+                  - TZ=Asia/Seoul
                 depends_on:
                   db:
                     condition: service_healthy
