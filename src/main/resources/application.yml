@@ -47,7 +47,7 @@ logging:
 # JWT 설정
 jwt:
   secret: ${JWT_SECRET_KEY}
-  access-token-validity-in-seconds: 1800
+  access-token-validity-in-seconds: 21600
   refresh-token-validity-in-seconds: 604800
 
 # Gemini API 설정
