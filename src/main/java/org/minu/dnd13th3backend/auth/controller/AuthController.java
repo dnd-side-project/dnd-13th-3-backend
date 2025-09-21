@@ -13,12 +13,8 @@ import org.minu.dnd13th3backend.auth.dto.TokenResponse;
 import org.minu.dnd13th3backend.auth.service.AuthService;
 import org.minu.dnd13th3backend.auth.service.RefreshTokenService;
 import org.minu.dnd13th3backend.auth.service.TokenBlacklistService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,25 +25,6 @@ public class AuthController {
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
     private final TokenBlacklistService tokenBlacklistService;
-    
-    @Value("${app.frontend.base-url}")
-    private String frontendBaseUrl;
-
-    @Operation(hidden = true)
-    @GetMapping("/oauth2/success")  
-    public RedirectView oauth2Success(@AuthenticationPrincipal OAuth2User oauth2User) {
-        TokenResponse tokenResponse = authService.processOAuth2Login(oauth2User);
-        
-        String frontendUrl = frontendBaseUrl + "/login/success" +
-                "?accessToken=" + tokenResponse.getAccessToken() +
-                "&refreshToken=" + tokenResponse.getRefreshToken() +
-
-                "&characterIndex=" + tokenResponse.getCharacterIndex() +
-                "&isNewUser=" + tokenResponse.getIsNewUser();
-
-        
-        return new RedirectView(frontendUrl);
-    }
 
     @Operation(hidden = true)
     @GetMapping("/oauth2/failure")
@@ -56,12 +33,12 @@ public class AuthController {
     }
 
     @Operation(
-            summary = "JWT 토큰 갱신", 
+            summary = "JWT 토큰 갱신",
             description = "Refresh Token을 사용하여 새로운 Access Token과 Refresh Token을 발급받습니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    responseCode = "200", 
+                    responseCode = "200",
                     description = "토큰 갱신 성공",
                     content = @Content(
                             schema = @Schema(implementation = TokenResponse.class),
@@ -79,7 +56,7 @@ public class AuthController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "401", 
+                    responseCode = "401",
                     description = "유효하지 않은 Refresh Token",
                     content = @Content(
                             examples = @ExampleObject(
@@ -88,7 +65,7 @@ public class AuthController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "404", 
+                    responseCode = "404",
                     description = "사용자를 찾을 수 없음",
                     content = @Content(
                             examples = @ExampleObject(
@@ -100,7 +77,7 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refresh(
             @Parameter(
-                    description = "Bearer {refreshToken} 형태의 Refresh Token", 
+                    description = "Bearer {refreshToken} 형태의 Refresh Token",
                     required = true,
                     example = "Bearer eyJhbGciOiJIUzUxMiJ9..."
             )
@@ -111,16 +88,16 @@ public class AuthController {
     }
 
     @Operation(
-            summary = "로그아웃", 
+            summary = "로그아웃",
             description = "Access Token을 무효화하여 로그아웃합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    responseCode = "204", 
+                    responseCode = "204",
                     description = "로그아웃 성공"
             ),
             @ApiResponse(
-                    responseCode = "401", 
+                    responseCode = "401",
                     description = "유효하지 않은 토큰",
                     content = @Content(
                             examples = @ExampleObject(
@@ -132,18 +109,19 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @Parameter(
-                    description = "Bearer {accessToken} 형태의 Access Token", 
+                    description = "Bearer {accessToken} 형태의 Access Token",
                     required = true,
                     example = "Bearer eyJhbGciOiJIUzUxMiJ9..."
             )
             @RequestHeader("Authorization") String authHeader) {
-        
+
         String accessToken = authHeader.replace("Bearer ", "");
         String userId = authService.getUserIdFromToken(accessToken);
-        
+
         tokenBlacklistService.blacklistToken(accessToken);
         refreshTokenService.deleteRefreshToken(userId);
-        
+
         return ResponseEntity.noContent().build();
     }
 }
+

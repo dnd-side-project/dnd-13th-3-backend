@@ -1,6 +1,8 @@
 package org.minu.dnd13th3backend.auth.config;
 
 import org.minu.dnd13th3backend.auth.filter.JwtAuthenticationFilter;
+import org.minu.dnd13th3backend.auth.filter.NativeAppDetectionFilter;
+import org.minu.dnd13th3backend.auth.handler.OAuth2AuthenticationSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +24,12 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Autowired
+    private NativeAppDetectionFilter nativeAppDetectionFilter;
+
+    @Autowired
+    private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -35,11 +43,13 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/api/auth/oauth2/success", true)
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureUrl("/api/auth/oauth2/failure")
                 )
+                .addFilterBefore(nativeAppDetectionFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 }
+
